@@ -19,7 +19,19 @@
       --danger: #dc2626;
       --chip: #eef2ff;
     }
-
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --panel: #111827;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --border: #374151;
+  --primary: #3b82f6;
+  --primary-dark: #2563eb;
+  --user: #1e3a8a;
+  --bot: #1f2937;
+  --danger: #f87171;
+  --chip: #1e1b4b;
+}
     * {
       box-sizing: border-box;
     }
@@ -69,6 +81,13 @@
       color: var(--muted);
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
     .session {
       font-size: 11px;
       color: var(--muted);
@@ -77,6 +96,53 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .theme-btn {
+      min-width: 72px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #111827;
+      color: #ffffff;
+      font-size: 12px;
+    }
+
+    [data-theme="dark"] .theme-btn {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    [data-theme="dark"] .header,
+    [data-theme="dark"] .controls,
+    [data-theme="dark"] .student-meta,
+    [data-theme="dark"] .quick-actions,
+    [data-theme="dark"] .input-area,
+    [data-theme="dark"] .hint {
+      background: var(--panel);
+    }
+
+    [data-theme="dark"] .controls input,
+    [data-theme="dark"] .controls select,
+    [data-theme="dark"] .student-meta input,
+    [data-theme="dark"] textarea {
+      background: #0b1220;
+      color: var(--text);
+    }
+
+    [data-theme="dark"] .controls input::placeholder,
+    [data-theme="dark"] .student-meta input::placeholder,
+    [data-theme="dark"] textarea::placeholder {
+      color: #94a3b8;
+    }
+
+    [data-theme="dark"] .quick-actions button {
+      color: #c7d2fe;
+      border-color: #3730a3;
+    }
+
+    [data-theme="dark"] .message.error {
+      background: #450a0a;
+      color: #fecaca;
     }
 
     .controls {
@@ -269,12 +335,23 @@
     font-size: 11px;
   }
 
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .session {
     width: 100%;
     max-width: 100%;
     text-align: left;
     white-space: normal;
     word-break: break-word;
+  }
+
+  .theme-btn {
+    width: auto;
+    min-width: 72px;
+    flex: 0 0 auto;
   }
 
   .controls,
@@ -343,7 +420,10 @@
         <h1>Autonomous Mentor Chat</h1>
         <span>Bootcamp mentor connected to Drive instructions and student progress</span>
       </div>
-      <div class="session" id="sessionLabel"></div>
+      <div class="header-actions">
+        <div class="session" id="sessionLabel"></div>
+        <button class="theme-btn" onclick="toggleTheme()">Dark</button>
+      </div>
     </div>
 
     <div class="controls">
@@ -404,6 +484,7 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
       localStorage.setItem("ai_drive_chatbot_session_id", sessionId);
     }
 
+    applyTheme(localStorage.getItem("mentor_theme") || "light");
     restoreSavedFields();
     updateSessionLabel();
 
@@ -416,13 +497,25 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
       }
     });
 
+    let studentLookupTimer = null;
+
     ["studentId", "studentEmail", "activityCode", "userName", "userRole"].forEach(function(id) {
       const el = document.getElementById(id);
       if (!el) return;
 
       el.addEventListener("input", function() {
         localStorage.setItem("mentor_" + id, el.value || "");
+
+        if (id === "studentId") {
+          scheduleStudentLookup();
+        }
       });
+
+      if (id === "studentId") {
+        el.addEventListener("blur", function() {
+          lookupStudentById();
+        });
+      }
     });
 
     function restoreSavedFields() {
@@ -476,6 +569,80 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
     function setLoading(isLoading) {
       document.getElementById("sendBtn").disabled = isLoading;
       document.getElementById("sendBtn").textContent = isLoading ? "Sending..." : "Send";
+    }
+
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("mentor_theme", theme);
+
+      const btn = document.querySelector(".theme-btn");
+      if (btn) {
+        btn.textContent = theme === "dark" ? "Light" : "Dark";
+      }
+    }
+
+    function toggleTheme() {
+      const current = localStorage.getItem("mentor_theme") || "light";
+      applyTheme(current === "dark" ? "light" : "dark");
+    }
+
+    function scheduleStudentLookup() {
+      clearTimeout(studentLookupTimer);
+
+      studentLookupTimer = setTimeout(function() {
+        lookupStudentById();
+      }, 500);
+    }
+
+    async function lookupStudentById() {
+      const studentIdEl = document.getElementById("studentId");
+      const nameEl = document.getElementById("userName");
+      const emailEl = document.getElementById("studentEmail");
+      const roleEl = document.getElementById("userRole");
+
+      const studentId = studentIdEl ? studentIdEl.value.trim() : "";
+
+      if (!studentId) {
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            action: "getStudentProfile",
+            studentId: studentId
+          })
+        });
+
+        const res = await response.json();
+
+        if (!res || !res.ok || !res.found) {
+          return;
+        }
+
+        if (nameEl && res.name) {
+          nameEl.value = res.name;
+          localStorage.setItem("mentor_userName", res.name);
+        }
+
+        if (emailEl && res.email) {
+          emailEl.value = res.email;
+          localStorage.setItem("mentor_studentEmail", res.email);
+        }
+
+        if (roleEl && res.level) {
+          roleEl.value = res.level;
+          localStorage.setItem("mentor_userRole", res.level);
+        }
+
+      } catch (err) {
+        console.log("Student lookup failed:", err);
+      }
     }
 
     function getStudentId_() {
