@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Autonomous Mentor Chat</title>
+
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --user: #dbeafe;
+      --bot: #f3f4f6;
+      --danger: #dc2626;
+      --chip: #eef2ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 980px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+
+    .header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .title span {
+      display: block;
+      margin-top: 3px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .session {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: right;
+      max-width: 330px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .controls {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: #ffffff;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .student-meta {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: #ffffff;
+      display: grid;
+      grid-template-columns: 1fr 1fr 160px;
+      gap: 10px;
+    }
+
+    .controls input,
+    .controls select,
+    .student-meta input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      background: #ffffff;
+      outline: none;
+    }
+
+    .controls input:focus,
+    .controls select:focus,
+    .student-meta input:focus {
+      border-color: var(--primary);
+    }
+
+    .controls button {
+      padding: 9px 12px;
+      min-width: 110px;
+      background: #374151;
+    }
+
+    .quick-actions {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: #ffffff;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .quick-actions button {
+      background: var(--chip);
+      color: #3730a3;
+      border: 1px solid #c7d2fe;
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      min-width: unset;
+      font-weight: 700;
+    }
+
+    .quick-actions button:hover {
+      background: #e0e7ff;
+    }
+
+    .chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--bg);
+    }
+
+    .message {
+      max-width: 84%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      line-height: 1.45;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      background: var(--user);
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.bot {
+      align-self: flex-start;
+      background: var(--bot);
+      border-bottom-left-radius: 4px;
+    }
+
+    .message.error {
+      align-self: flex-start;
+      background: #fee2e2;
+      color: var(--danger);
+      border-bottom-left-radius: 4px;
+    }
+
+    .input-area {
+      border-top: 1px solid var(--border);
+      padding: 14px;
+      background: #ffffff;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    textarea {
+      flex: 1;
+      min-height: 48px;
+      max-height: 170px;
+      resize: vertical;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: var(--primary);
+    }
+
+    button {
+      border: none;
+      background: var(--primary);
+      color: #ffffff;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      min-width: 88px;
+    }
+
+    button:hover {
+      background: var(--primary-dark);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .hint {
+      padding: 8px 14px;
+      font-size: 11px;
+      color: var(--muted);
+      background: #ffffff;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 760px) {
+      .controls,
+      .student-meta {
+        grid-template-columns: 1fr;
+      }
+
+      .message {
+        max-width: 94%;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .session {
+        text-align: left;
+      }
+
+      .input-area {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="header">
+      <div class="title">
+        <h1>Autonomous Mentor Chat</h1>
+        <span>Bootcamp mentor connected to Drive instructions and student progress</span>
+      </div>
+      <div class="session" id="sessionLabel"></div>
+    </div>
+
+    <div class="controls">
+      <input id="userName" placeholder="Name, optional">
+      <input id="userRole" placeholder="Role or class, optional">
+      <select id="chatMode">
+        <option value="mentor" selected>Venture Mentor</option>
+        <option value="assessment">Assessment Coach</option>
+        <option value="faq">Knowledge FAQ</option>
+        <option value="general">General Assistant</option>
+      </select>
+      <button onclick="newSession()">New Session</button>
+    </div>
+
+    <div class="student-meta">
+      <input id="studentId" type="text" placeholder="Student ID, example: 001">
+      <input id="studentEmail" type="email" placeholder="Student Email, optional">
+      <input id="activityCode" type="text" placeholder="Activity, example: 1.1">
+    </div>
+
+    <div class="quick-actions">
+      <button onclick="quickAsk('Start by asking me the right diagnostic questions.')">Start diagnostic</button>
+      <button onclick="quickAsk('Ask me one question at a time.')">One question</button>
+      <button onclick="quickAsk('Check my progress and tell me what is missing.')">Check progress</button>
+      <button onclick="quickAsk('Create a step-by-step action plan for this activity.')">Action plan</button>
+      <button onclick="quickAsk('AGREE')">Agree and record</button>
+    </div>
+
+    <div class="chat" id="chat">
+      <div class="message bot">
+Welcome.
+
+Fill Student ID and Activity first.
+
+Example:
+Student ID: 001
+Activity: 1.1
+
+Then type the student's answer. Type AGREE only after the mentor proposes a final response.
+      </div>
+    </div>
+
+    <div class="input-area">
+      <textarea id="messageInput" placeholder="Type the student's answer here. Press Enter to send, Shift + Enter for a new line."></textarea>
+      <button id="sendBtn" onclick="sendMessage()">Send</button>
+    </div>
+
+    <div class="hint">
+      Student ID must be typed in the Student ID box, not only in the chat message.
+    </div>
+  </div>
+
+  <script>
+    let sessionId = localStorage.getItem("ai_drive_chatbot_session_id");
+
+    if (!sessionId) {
+      sessionId = makeSessionId();
+      localStorage.setItem("ai_drive_chatbot_session_id", sessionId);
+    }
+
+    restoreSavedFields();
+    updateSessionLabel();
+
+    const input = document.getElementById("messageInput");
+
+    input.addEventListener("keydown", function(e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    ["studentId", "studentEmail", "activityCode", "userName", "userRole"].forEach(function(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      el.addEventListener("input", function() {
+        localStorage.setItem("mentor_" + id, el.value || "");
+      });
+    });
+
+    function restoreSavedFields() {
+      ["studentId", "studentEmail", "activityCode", "userName", "userRole"].forEach(function(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        const saved = localStorage.getItem("mentor_" + id);
+        if (saved) {
+          el.value = saved;
+        }
+      });
+    }
+
+    function makeSessionId() {
+      return "websess_" +
+        new Date().toISOString().replace(/[^0-9]/g, "") +
+        "_" +
+        Math.random().toString(36).slice(2, 8);
+    }
+
+    function updateSessionLabel() {
+      document.getElementById("sessionLabel").textContent = "Session: " + sessionId;
+    }
+
+    function newSession() {
+      sessionId = makeSessionId();
+      localStorage.setItem("ai_drive_chatbot_session_id", sessionId);
+      updateSessionLabel();
+
+      const chat = document.getElementById("chat");
+      chat.innerHTML = "";
+      addMessage("bot", "New session started. Fill Student ID and Activity, then send the student's answer.");
+    }
+
+    function quickAsk(text) {
+      document.getElementById("messageInput").value = text;
+      sendMessage();
+    }
+
+    function addMessage(type, text) {
+      const chat = document.getElementById("chat");
+      const div = document.createElement("div");
+      div.className = "message " + type;
+      div.textContent = text;
+
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function setLoading(isLoading) {
+      document.getElementById("sendBtn").disabled = isLoading;
+      document.getElementById("sendBtn").textContent = isLoading ? "Sending..." : "Send";
+    }
+
+    function getStudentId_() {
+      const el = document.getElementById("studentId");
+      return el ? el.value.trim() : "";
+    }
+
+    function getStudentEmail_() {
+      const el = document.getElementById("studentEmail");
+      return el ? el.value.trim() : "";
+    }
+
+    function getCurrentActivityCode_() {
+      const el = document.getElementById("activityCode");
+      const value = el ? el.value.trim() : "";
+
+      if (value) {
+        return value;
+      }
+
+      return detectActivityFromMessage_(document.getElementById("messageInput").value || "");
+    }
+
+    function detectActivityFromMessage_(text) {
+      const activityMatch = String(text || "").match(/(?:Activity|Aktivitas|Kegiatan)\s*([0-9]{1,2}\.[0-9]{1,2})/i);
+
+      if (activityMatch && activityMatch[1]) {
+        return activityMatch[1];
+      }
+
+      const plainMatch = String(text || "").match(/\b([0-9]{1,2}\.[0-9]{1,2})\b/);
+
+      if (plainMatch && plainMatch[1]) {
+        return plainMatch[1];
+      }
+
+      return "";
+    }
+
+    function buildInteractivePrefix() {
+      const userName = document.getElementById("userName").value.trim() || "Anonymous";
+      const userRole = document.getElementById("userRole").value.trim() || "Student";
+      const chatMode = document.getElementById("chatMode").value;
+      const studentId = getStudentId_();
+      const studentEmail = getStudentEmail_();
+      const activityCode = getCurrentActivityCode_();
+
+      let modeInstruction = "";
+
+      if (chatMode === "mentor") {
+        modeInstruction = "Mode: Venture Mentor. Reply in the same language used by the student. Evaluate the student's answer against the activity rubric. If weak, push back. If acceptable, propose a stronger response. Ask the student to type AGREE before recording.";
+      } else if (chatMode === "assessment") {
+        modeInstruction = "Mode: Assessment Coach. Reply in the same language used by the student. Evaluate the response against the available rubric. Give strengths, gaps, and one improvement task.";
+      } else if (chatMode === "faq") {
+        modeInstruction = "Mode: Knowledge FAQ. Reply in the same language used by the student. Answer using the knowledge folder. If knowledge is missing, say what is missing.";
+      } else {
+        modeInstruction = "Mode: General Assistant. Reply in the same language used by the student. Help clearly and practically.";
+      }
+
+      return [
+        "INTERACTIVE CHAT CONTEXT",
+        "User name: " + userName,
+        "User role/class: " + userRole,
+        "Student ID: " + studentId,
+        "Student email: " + studentEmail,
+        "Activity code: " + activityCode,
+        modeInstruction,
+        "",
+        "USER MESSAGE:"
+      ].join("\n");
+    }
+
+    async function sendMessage() {
+      const rawMessage = input.value.trim();
+      const userName = document.getElementById("userName").value.trim() || "Anonymous";
+      const userRole = document.getElementById("userRole").value.trim() || "Student";
+      const chatMode = document.getElementById("chatMode").value;
+      const activityCode = getCurrentActivityCode_();
+
+      if (!rawMessage) {
+        return;
+      }
+
+      input.value = "";
+      addMessage("user", rawMessage);
+      setLoading(true);
+
+      const fullMessage = buildInteractivePrefix() + "\n" + rawMessage;
+
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: fullMessage,
+            sessionId: sessionId,
+            studentId: getStudentId_(),
+            userName: userName,
+            userEmail: getStudentEmail_(),
+            userRole: userRole || "Student",
+            chatMode: chatMode || "mentor",
+            activityCode: activityCode
+          })
+        });
+
+        const res = await response.json();
+
+        setLoading(false);
+
+        if (!res || !res.ok) {
+          addMessage("error", res && res.error ? res.error : "Unknown server error.");
+          return;
+        }
+
+        sessionId = res.sessionId || sessionId;
+        localStorage.setItem("ai_drive_chatbot_session_id", sessionId);
+        updateSessionLabel();
+
+        addMessage("bot", res.answer || "No answer returned.");
+
+      } catch (err) {
+        setLoading(false);
+        addMessage("error", err && err.message ? err.message : String(err));
+      }
+    }
+  </script>
+</body>
+</html>
