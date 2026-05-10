@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   if (!backendUrl) {
     return res.status(500).json({
       ok: false,
-      error: "Missing APPS_SCRIPT_BACKEND_URL in Vercel Environment Variables."
+      error: "Missing APPS_SCRIPT_BACKEND_URL"
     });
   }
 
@@ -26,10 +26,8 @@ export default async function handler(req, res) {
 
     const text = await response.text();
 
-    let data;
-
     try {
-      data = JSON.parse(text);
+      return res.status(200).json(JSON.parse(text));
     } catch (err) {
       return res.status(502).json({
         ok: false,
@@ -37,8 +35,6 @@ export default async function handler(req, res) {
         preview: text.substring(0, 500)
       });
     }
-
-    return res.status(200).json(data);
 
   } catch (err) {
     return res.status(500).json({
