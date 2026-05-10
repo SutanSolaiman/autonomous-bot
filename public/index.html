@@ -889,8 +889,30 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
         try {
           payload = JSON.parse(payload);
         } catch (err) {
-          addMessage("bot", payload);
-          return;
+         if (typeof payload === "string") {
+  const cleaned = payload
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```$/i, "")
+    .trim();
+
+  try {
+    payload = JSON.parse(cleaned);
+  } catch (err) {
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        payload = JSON.parse(jsonMatch[0]);
+      } catch (err2) {
+        addMessage("bot", cleaned);
+        return;
+      }
+    } else {
+      addMessage("bot", cleaned);
+      return;
+    }
+  }
+}
         }
       }
 
