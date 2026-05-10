@@ -18,30 +18,44 @@
       --bot: #f3f4f6;
       --danger: #dc2626;
       --chip: #eef2ff;
+      --chip-text: #3730a3;
+      --chip-border: #c7d2fe;
+      --input-bg: #ffffff;
     }
-[data-theme="dark"] {
-  --bg: #0f172a;
-  --panel: #111827;
-  --text: #e5e7eb;
-  --muted: #9ca3af;
-  --border: #374151;
-  --primary: #3b82f6;
-  --primary-dark: #2563eb;
-  --user: #1e3a8a;
-  --bot: #1f2937;
-  --danger: #f87171;
-  --chip: #1e1b4b;
-}
+
+    [data-theme="dark"] {
+      --bg: #0f172a;
+      --panel: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #374151;
+      --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --user: #1e3a8a;
+      --bot: #1f2937;
+      --danger: #f87171;
+      --chip: #1e1b4b;
+      --chip-text: #c7d2fe;
+      --chip-border: #3730a3;
+      --input-bg: #0b1220;
+    }
+
     * {
       box-sizing: border-box;
     }
 
+    html,
     body {
       margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
       font-family: Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
-      height: 100vh;
+    }
+
+    body {
       display: flex;
       justify-content: center;
       align-items: stretch;
@@ -50,22 +64,24 @@
     .app {
       width: 100%;
       max-width: 980px;
-      height: 100vh;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
       background: var(--panel);
       border-left: 1px solid var(--border);
       border-right: 1px solid var(--border);
+      overflow: hidden;
     }
 
     .header {
-      padding: 16px 20px;
+      padding: 14px 16px;
       border-bottom: 1px solid var(--border);
-      background: #ffffff;
-      display: flex;
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: 1fr auto;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
+      flex: 0 0 auto;
     }
 
     .title h1 {
@@ -81,74 +97,43 @@
       color: var(--muted);
     }
 
-    .header-actions {
+    .top-actions {
       display: flex;
       align-items: center;
       gap: 8px;
-      min-width: 0;
     }
 
     .session {
       font-size: 11px;
       color: var(--muted);
       text-align: right;
-      max-width: 330px;
+      max-width: 260px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .theme-btn {
-      min-width: 72px;
+    .menu-toggle {
+      display: none;
+      border: 1px solid var(--border);
+      background: var(--chip);
+      color: var(--chip-text);
       padding: 8px 10px;
       border-radius: 10px;
-      background: #111827;
-      color: #ffffff;
       font-size: 12px;
+      font-weight: 700;
+      min-width: 74px;
     }
 
-    [data-theme="dark"] .theme-btn {
-      background: #e5e7eb;
-      color: #111827;
-    }
-
-    [data-theme="dark"] .header,
-    [data-theme="dark"] .controls,
-    [data-theme="dark"] .student-meta,
-    [data-theme="dark"] .quick-actions,
-    [data-theme="dark"] .input-area,
-    [data-theme="dark"] .hint {
+    .top-panel {
+      flex: 0 0 auto;
       background: var(--panel);
-    }
-
-    [data-theme="dark"] .controls input,
-    [data-theme="dark"] .controls select,
-    [data-theme="dark"] .student-meta input,
-    [data-theme="dark"] textarea {
-      background: #0b1220;
-      color: var(--text);
-    }
-
-    [data-theme="dark"] .controls input::placeholder,
-    [data-theme="dark"] .student-meta input::placeholder,
-    [data-theme="dark"] textarea::placeholder {
-      color: #94a3b8;
-    }
-
-    [data-theme="dark"] .quick-actions button {
-      color: #c7d2fe;
-      border-color: #3730a3;
-    }
-
-    [data-theme="dark"] .message.error {
-      background: #450a0a;
-      color: #fecaca;
+      border-bottom: 1px solid var(--border);
     }
 
     .controls {
       padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      background: #ffffff;
+      background: var(--panel);
       display: grid;
       grid-template-columns: 1fr 1fr 1fr auto;
       gap: 8px;
@@ -156,9 +141,8 @@
     }
 
     .student-meta {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      background: #ffffff;
+      padding: 0 14px 12px;
+      background: var(--panel);
       display: grid;
       grid-template-columns: 1fr 1fr 160px;
       gap: 10px;
@@ -172,8 +156,15 @@
       border-radius: 10px;
       padding: 10px 12px;
       font-size: 14px;
-      background: #ffffff;
+      background: var(--input-bg);
+      color: var(--text);
       outline: none;
+    }
+
+    .controls input::placeholder,
+    .student-meta input::placeholder,
+    textarea::placeholder {
+      color: var(--muted);
     }
 
     .controls input:focus,
@@ -189,9 +180,8 @@
     }
 
     .quick-actions {
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
-      background: #ffffff;
+      padding: 10px 14px 12px;
+      background: var(--panel);
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
@@ -199,8 +189,8 @@
 
     .quick-actions button {
       background: var(--chip);
-      color: #3730a3;
-      border: 1px solid #c7d2fe;
+      color: var(--chip-text);
+      border: 1px solid var(--chip-border);
       padding: 8px 10px;
       border-radius: 999px;
       font-size: 12px;
@@ -208,14 +198,11 @@
       font-weight: 700;
     }
 
-    .quick-actions button:hover {
-      background: #e0e7ff;
-    }
-
     .chat {
-      flex: 1;
+      flex: 1 1 auto;
+      min-height: 0;
       overflow-y: auto;
-      padding: 20px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -251,10 +238,15 @@
       border-bottom-left-radius: 4px;
     }
 
+    [data-theme="dark"] .message.error {
+      background: #450a0a;
+    }
+
     .input-area {
+      flex: 0 0 auto;
       border-top: 1px solid var(--border);
-      padding: 14px;
-      background: #ffffff;
+      padding: 12px;
+      background: var(--panel);
       display: flex;
       gap: 10px;
       align-items: flex-end;
@@ -263,13 +255,15 @@
     textarea {
       flex: 1;
       min-height: 48px;
-      max-height: 170px;
+      max-height: 160px;
       resize: vertical;
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 12px;
       font-family: Arial, sans-serif;
       font-size: 14px;
+      background: var(--input-bg);
+      color: var(--text);
       outline: none;
     }
 
@@ -298,118 +292,117 @@
     }
 
     .hint {
+      flex: 0 0 auto;
       padding: 8px 14px;
       font-size: 11px;
       color: var(--muted);
-      background: #ffffff;
+      background: var(--panel);
       border-top: 1px solid var(--border);
     }
 
     @media (max-width: 760px) {
-  html,
-  body {
-    height: 100%;
-    overflow: hidden;
-  }
+      .app {
+        max-width: none;
+        border-left: none;
+        border-right: none;
+      }
 
-  .app {
-    width: 100%;
-    height: 100dvh;
-    max-width: none;
-    border-left: none;
-    border-right: none;
-  }
+      .header {
+        padding: 10px 12px;
+        grid-template-columns: 1fr auto;
+      }
 
-  .header {
-    padding: 12px 14px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-  }
+      .title h1 {
+        font-size: 16px;
+      }
 
-  .title h1 {
-    font-size: 16px;
-  }
+      .title span {
+        display: none;
+      }
 
-  .title span {
-    font-size: 11px;
-  }
+      .top-actions {
+        gap: 6px;
+      }
 
-  .header-actions {
-    width: 100%;
-    justify-content: space-between;
-  }
+      .session {
+        display: none;
+      }
 
-  .session {
-    width: 100%;
-    max-width: 100%;
-    text-align: left;
-    white-space: normal;
-    word-break: break-word;
-  }
+      .menu-toggle {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+      }
 
-  .theme-btn {
-    width: auto;
-    min-width: 72px;
-    flex: 0 0 auto;
-  }
+      .top-panel {
+        max-height: 420px;
+        overflow: hidden;
+        transition: max-height 0.22s ease, border-width 0.22s ease;
+      }
 
-  .controls,
-  .student-meta {
-    grid-template-columns: 1fr;
-    padding: 10px 12px;
-    gap: 8px;
-  }
+      body.mobile-menu-collapsed .top-panel {
+        max-height: 0;
+        border-bottom-width: 0;
+      }
 
-  .quick-actions {
-    padding: 8px 12px;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    white-space: nowrap;
-  }
+      .controls,
+      .student-meta {
+        grid-template-columns: 1fr;
+        padding: 10px 12px;
+        gap: 8px;
+      }
 
-  .quick-actions button {
-    flex: 0 0 auto;
-    width: auto;
-  }
+      .student-meta {
+        padding-top: 0;
+      }
 
-  .chat {
-    flex: 1;
-    padding: 12px;
-    gap: 10px;
-    overflow-y: auto;
-  }
+      .quick-actions {
+        padding: 8px 12px 10px;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+      }
 
-  .message {
-    max-width: 96%;
-    font-size: 14px;
-    padding: 10px 12px;
-  }
+      .quick-actions button {
+        flex: 0 0 auto;
+        width: auto;
+      }
 
-  .input-area {
-    padding: 10px 12px;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
+      .chat {
+        padding: 12px;
+        gap: 10px;
+      }
 
-  textarea {
-    width: 100%;
-    min-height: 70px;
-    max-height: 130px;
-    font-size: 14px;
-  }
+      .message {
+        max-width: 96%;
+        font-size: 14px;
+        padding: 10px 12px;
+      }
 
-  button {
-    width: 100%;
-    min-width: 0;
-  }
+      .input-area {
+        padding: 10px 12px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
 
-  .hint {
-    padding: 8px 12px;
-    font-size: 10px;
-  }
-}
+      textarea {
+        width: 100%;
+        min-height: 76px;
+        max-height: 130px;
+        font-size: 14px;
+      }
+
+      button {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .hint {
+        padding: 7px 12px;
+        font-size: 10px;
+      }
+    }
   </style>
 </head>
 
@@ -420,36 +413,38 @@
         <h1>Autonomous Mentor Chat</h1>
         <span>Bootcamp mentor connected to Drive instructions and student progress</span>
       </div>
-      <div class="header-actions">
+      <div class="top-actions">
         <div class="session" id="sessionLabel"></div>
-        <button class="theme-btn" onclick="toggleTheme()">Dark</button>
+        <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()">Menu</button>
       </div>
     </div>
 
-    <div class="controls">
-      <input id="userName" placeholder="Name, optional">
-      <input id="userRole" placeholder="Role or class, optional">
-      <select id="chatMode">
-        <option value="mentor" selected>Venture Mentor</option>
-        <option value="assessment">Assessment Coach</option>
-        <option value="faq">Knowledge FAQ</option>
-        <option value="general">General Assistant</option>
-      </select>
-      <button onclick="newSession()">New Session</button>
-    </div>
+    <div class="top-panel" id="topPanel">
+      <div class="controls">
+        <input id="userName" placeholder="Name, optional">
+        <input id="userRole" placeholder="Role or class, optional">
+        <select id="chatMode">
+          <option value="mentor" selected>Venture Mentor</option>
+          <option value="assessment">Assessment Coach</option>
+          <option value="faq">Knowledge FAQ</option>
+          <option value="general">General Assistant</option>
+        </select>
+        <button onclick="newSession()">New Session</button>
+      </div>
 
-    <div class="student-meta">
-      <input id="studentId" type="text" placeholder="Student ID, example: 001">
-      <input id="studentEmail" type="email" placeholder="Student Email, optional">
-      <input id="activityCode" type="text" placeholder="Activity, example: 1.1">
-    </div>
+      <div class="student-meta">
+        <input id="studentId" type="text" placeholder="Student ID, example: 001">
+        <input id="studentEmail" type="email" placeholder="Student Email, optional">
+        <input id="activityCode" type="text" placeholder="Activity, example: 1.1">
+      </div>
 
-    <div class="quick-actions">
-      <button onclick="quickAsk('Start by asking me the right diagnostic questions.')">Start diagnostic</button>
-      <button onclick="quickAsk('Ask me one question at a time.')">One question</button>
-      <button onclick="quickAsk('Check my progress and tell me what is missing.')">Check progress</button>
-      <button onclick="quickAsk('Create a step-by-step action plan for this activity.')">Action plan</button>
-      <button onclick="quickAsk('AGREE')">Agree and record</button>
+      <div class="quick-actions">
+        <button onclick="quickAsk('Start by asking me the right diagnostic questions.')">Start diagnostic</button>
+        <button onclick="quickAsk('Ask me one question at a time.')">One question</button>
+        <button onclick="quickAsk('Check my progress and tell me what is missing.')">Check progress</button>
+        <button onclick="quickAsk('Create a step-by-step action plan for this activity.')">Action plan</button>
+        <button onclick="quickAsk('AGREE')">Agree and record</button>
+      </div>
     </div>
 
     <div class="chat" id="chat">
@@ -472,21 +467,23 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
     </div>
 
     <div class="hint">
-      Student ID must be typed in the Student ID box, not only in the chat message.
+      Student ID must be typed in the Student ID box. On mobile, tap Menu to show or hide setup fields.
     </div>
   </div>
 
   <script>
     let sessionId = localStorage.getItem("ai_drive_chatbot_session_id");
+    let studentLookupTimer = null;
 
     if (!sessionId) {
       sessionId = makeSessionId();
       localStorage.setItem("ai_drive_chatbot_session_id", sessionId);
     }
 
-    applyTheme(localStorage.getItem("mentor_theme") || "light");
+    applyMobileDarkMode();
     restoreSavedFields();
     updateSessionLabel();
+    initializeMobileMenu();
 
     const input = document.getElementById("messageInput");
 
@@ -496,8 +493,6 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
         sendMessage();
       }
     });
-
-    let studentLookupTimer = null;
 
     ["studentId", "studentEmail", "activityCode", "userName", "userRole"].forEach(function(id) {
       const el = document.getElementById(id);
@@ -517,6 +512,48 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
         });
       }
     });
+
+    window.addEventListener("resize", function() {
+      applyMobileDarkMode();
+      initializeMobileMenu();
+    });
+
+    function applyMobileDarkMode() {
+      if (window.matchMedia("(max-width: 760px)").matches) {
+        document.documentElement.setAttribute("data-theme", "dark");
+      } else {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    }
+
+    function initializeMobileMenu() {
+      if (window.matchMedia("(max-width: 760px)").matches) {
+        const saved = localStorage.getItem("mentor_mobile_menu_collapsed");
+        if (saved === null || saved === "true") {
+          document.body.classList.add("mobile-menu-collapsed");
+        } else {
+          document.body.classList.remove("mobile-menu-collapsed");
+        }
+        updateMenuButton();
+      } else {
+        document.body.classList.remove("mobile-menu-collapsed");
+      }
+    }
+
+    function toggleMobileMenu() {
+      document.body.classList.toggle("mobile-menu-collapsed");
+      localStorage.setItem(
+        "mentor_mobile_menu_collapsed",
+        document.body.classList.contains("mobile-menu-collapsed") ? "true" : "false"
+      );
+      updateMenuButton();
+    }
+
+    function updateMenuButton() {
+      const btn = document.getElementById("menuToggle");
+      if (!btn) return;
+      btn.textContent = document.body.classList.contains("mobile-menu-collapsed") ? "Menu" : "Hide";
+    }
 
     function restoreSavedFields() {
       ["studentId", "studentEmail", "activityCode", "userName", "userRole"].forEach(function(id) {
@@ -571,25 +608,45 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
       document.getElementById("sendBtn").textContent = isLoading ? "Sending..." : "Send";
     }
 
-
-    function applyTheme(theme) {
-      document.documentElement.setAttribute("data-theme", theme);
-      localStorage.setItem("mentor_theme", theme);
-
-      const btn = document.querySelector(".theme-btn");
-      if (btn) {
-        btn.textContent = theme === "dark" ? "Light" : "Dark";
-      }
+    function getStudentId_() {
+      const el = document.getElementById("studentId");
+      return el ? el.value.trim() : "";
     }
 
-    function toggleTheme() {
-      const current = localStorage.getItem("mentor_theme") || "light";
-      applyTheme(current === "dark" ? "light" : "dark");
+    function getStudentEmail_() {
+      const el = document.getElementById("studentEmail");
+      return el ? el.value.trim() : "";
+    }
+
+    function getCurrentActivityCode_() {
+      const el = document.getElementById("activityCode");
+      const value = el ? el.value.trim() : "";
+
+      if (value) {
+        return value;
+      }
+
+      return detectActivityFromMessage_(document.getElementById("messageInput").value || "");
+    }
+
+    function detectActivityFromMessage_(text) {
+      const activityMatch = String(text || "").match(/(?:Activity|Aktivitas|Kegiatan)\s*([0-9]{1,2}\.[0-9]{1,2})/i);
+
+      if (activityMatch && activityMatch[1]) {
+        return activityMatch[1];
+      }
+
+      const plainMatch = String(text || "").match(/\b([0-9]{1,2}\.[0-9]{1,2})\b/);
+
+      if (plainMatch && plainMatch[1]) {
+        return plainMatch[1];
+      }
+
+      return "";
     }
 
     function scheduleStudentLookup() {
       clearTimeout(studentLookupTimer);
-
       studentLookupTimer = setTimeout(function() {
         lookupStudentById();
       }, 500);
@@ -600,7 +657,6 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
       const nameEl = document.getElementById("userName");
       const emailEl = document.getElementById("studentEmail");
       const roleEl = document.getElementById("userRole");
-
       const studentId = studentIdEl ? studentIdEl.value.trim() : "";
 
       if (!studentId) {
@@ -639,47 +695,9 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
           roleEl.value = res.level;
           localStorage.setItem("mentor_userRole", res.level);
         }
-
       } catch (err) {
         console.log("Student lookup failed:", err);
       }
-    }
-
-    function getStudentId_() {
-      const el = document.getElementById("studentId");
-      return el ? el.value.trim() : "";
-    }
-
-    function getStudentEmail_() {
-      const el = document.getElementById("studentEmail");
-      return el ? el.value.trim() : "";
-    }
-
-    function getCurrentActivityCode_() {
-      const el = document.getElementById("activityCode");
-      const value = el ? el.value.trim() : "";
-
-      if (value) {
-        return value;
-      }
-
-      return detectActivityFromMessage_(document.getElementById("messageInput").value || "");
-    }
-
-    function detectActivityFromMessage_(text) {
-      const activityMatch = String(text || "").match(/(?:Activity|Aktivitas|Kegiatan)\s*([0-9]{1,2}\.[0-9]{1,2})/i);
-
-      if (activityMatch && activityMatch[1]) {
-        return activityMatch[1];
-      }
-
-      const plainMatch = String(text || "").match(/\b([0-9]{1,2}\.[0-9]{1,2})\b/);
-
-      if (plainMatch && plainMatch[1]) {
-        return plainMatch[1];
-      }
-
-      return "";
     }
 
     function buildInteractivePrefix() {
@@ -693,13 +711,13 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
       let modeInstruction = "";
 
       if (chatMode === "mentor") {
-        modeInstruction = "Mode: Venture Mentor. Reply in the same language used by the student. Evaluate the student's answer against the activity rubric. If weak, push back. If acceptable, propose a stronger response. Ask the student to type AGREE before recording.";
+        modeInstruction = "Mode: Venture Mentor. Detect and reply in the same language used by the student. Evaluate the student's answer against the activity rubric. If weak, push back. If acceptable, propose a stronger response. Ask the student to type AGREE before recording.";
       } else if (chatMode === "assessment") {
-        modeInstruction = "Mode: Assessment Coach. Reply in the same language used by the student. Evaluate the response against the available rubric. Give strengths, gaps, and one improvement task.";
+        modeInstruction = "Mode: Assessment Coach. Detect and reply in the same language used by the student. Evaluate the response against the available rubric. Give strengths, gaps, and one improvement task.";
       } else if (chatMode === "faq") {
-        modeInstruction = "Mode: Knowledge FAQ. Reply in the same language used by the student. Answer using the knowledge folder. If knowledge is missing, say what is missing.";
+        modeInstruction = "Mode: Knowledge FAQ. Detect and reply in the same language used by the student. Answer using the knowledge folder. If knowledge is missing, say what is missing.";
       } else {
-        modeInstruction = "Mode: General Assistant. Reply in the same language used by the student. Help clearly and practically.";
+        modeInstruction = "Mode: General Assistant. Detect and reply in the same language used by the student. Help clearly and practically.";
       }
 
       return [
@@ -751,7 +769,6 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
         });
 
         const res = await response.json();
-
         setLoading(false);
 
         if (!res || !res.ok) {
@@ -765,6 +782,11 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
 
         addMessage("bot", res.answer || "No answer returned.");
 
+        if (window.matchMedia("(max-width: 760px)").matches) {
+          document.body.classList.add("mobile-menu-collapsed");
+          localStorage.setItem("mentor_mobile_menu_collapsed", "true");
+          updateMenuButton();
+        }
       } catch (err) {
         setLoading(false);
         addMessage("error", err && err.message ? err.message : String(err));
@@ -773,3 +795,4 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
   </script>
 </body>
 </html>
+
