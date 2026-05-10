@@ -674,7 +674,14 @@ Button behavior:
       let modeInstruction = "";
 
       if (chatMode === "mentor") {
-        modeInstruction = "Mode: Venture Mentor. Detect and reply in the same language used by the student. Evaluate the student's answer against the activity rubric. If weak, push back. If acceptable, propose a stronger response. Ask the student to type AGREE before recording.";
+        modeInstruction =
+  "Mode: Venture Mentor. " +
+  "CRITICAL LANGUAGE RULE: " +
+  "Reply ONLY in the exact dominant language used by the latest user message. " +
+  "Do NOT switch language automatically. " +
+  "Do NOT use Filipino, Tagalog, Malay, or another ASEAN language unless the student explicitly used that language. " +
+  "If the student writes in English, reply fully in English. " +
+  "If the student writes in Bahasa Indonesia, reply fully in Bahasa Indonesia. ";
       } else if (chatMode === "assessment") {
         modeInstruction = "Mode: Assessment Coach. Detect and reply in the same language used by the student. Evaluate the response against the available rubric. Give strengths, gaps, and one improvement task.";
       } else if (chatMode === "faq") {
