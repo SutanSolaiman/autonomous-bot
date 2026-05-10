@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Autonomous Mentor Chat</title>
@@ -18,44 +19,18 @@
       --bot: #f3f4f6;
       --danger: #dc2626;
       --chip: #eef2ff;
-      --chip-text: #3730a3;
-      --chip-border: #c7d2fe;
-      --input-bg: #ffffff;
-    }
-
-    [data-theme="dark"] {
-      --bg: #0f172a;
-      --panel: #111827;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --border: #374151;
-      --primary: #3b82f6;
-      --primary-dark: #2563eb;
-      --user: #1e3a8a;
-      --bot: #1f2937;
-      --danger: #f87171;
-      --chip: #1e1b4b;
-      --chip-text: #c7d2fe;
-      --chip-border: #3730a3;
-      --input-bg: #0b1220;
     }
 
     * {
       box-sizing: border-box;
     }
 
-    html,
     body {
       margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
       font-family: Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
-    }
-
-    body {
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: stretch;
@@ -64,24 +39,22 @@
     .app {
       width: 100%;
       max-width: 980px;
-      height: 100dvh;
+      height: 100vh;
       display: flex;
       flex-direction: column;
       background: var(--panel);
       border-left: 1px solid var(--border);
       border-right: 1px solid var(--border);
-      overflow: hidden;
     }
 
     .header {
-      padding: 14px 16px;
+      padding: 16px 20px;
       border-bottom: 1px solid var(--border);
       background: var(--panel);
-      display: grid;
-      grid-template-columns: 1fr auto;
+      display: flex;
       align-items: center;
-      gap: 10px;
-      flex: 0 0 auto;
+      justify-content: space-between;
+      gap: 12px;
     }
 
     .title h1 {
@@ -97,7 +70,7 @@
       color: var(--muted);
     }
 
-    .top-actions {
+    .header-actions {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -107,7 +80,7 @@
       font-size: 11px;
       color: var(--muted);
       text-align: right;
-      max-width: 260px;
+      max-width: 330px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -115,24 +88,20 @@
 
     .menu-toggle {
       display: none;
-      border: 1px solid var(--border);
-      background: var(--chip);
-      color: var(--chip-text);
+      min-width: unset;
       padding: 8px 10px;
-      border-radius: 10px;
+      background: #374151;
       font-size: 12px;
-      font-weight: 700;
-      min-width: 74px;
     }
 
     .top-panel {
-      flex: 0 0 auto;
       background: var(--panel);
       border-bottom: 1px solid var(--border);
     }
 
     .controls {
       padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
       background: var(--panel);
       display: grid;
       grid-template-columns: 1fr 1fr 1fr auto;
@@ -140,8 +109,19 @@
       align-items: center;
     }
 
+    .signin-card {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
     .student-meta {
-      padding: 0 14px 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
       background: var(--panel);
       display: grid;
       grid-template-columns: 1fr 1fr 160px;
@@ -150,25 +130,21 @@
 
     .controls input,
     .controls select,
+    .signin-card input,
     .student-meta input {
       width: 100%;
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 10px 12px;
       font-size: 14px;
-      background: var(--input-bg);
+      background: var(--panel);
       color: var(--text);
       outline: none;
     }
 
-    .controls input::placeholder,
-    .student-meta input::placeholder,
-    textarea::placeholder {
-      color: var(--muted);
-    }
-
     .controls input:focus,
     .controls select:focus,
+    .signin-card input:focus,
     .student-meta input:focus {
       border-color: var(--primary);
     }
@@ -180,7 +156,8 @@
     }
 
     .quick-actions {
-      padding: 10px 14px 12px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
       background: var(--panel);
       display: flex;
       flex-wrap: wrap;
@@ -189,8 +166,8 @@
 
     .quick-actions button {
       background: var(--chip);
-      color: var(--chip-text);
-      border: 1px solid var(--chip-border);
+      color: #3730a3;
+      border: 1px solid #c7d2fe;
       padding: 8px 10px;
       border-radius: 999px;
       font-size: 12px;
@@ -198,11 +175,14 @@
       font-weight: 700;
     }
 
+    .quick-actions button:hover {
+      background: #e0e7ff;
+    }
+
     .chat {
-      flex: 1 1 auto;
-      min-height: 0;
+      flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -238,14 +218,9 @@
       border-bottom-left-radius: 4px;
     }
 
-    [data-theme="dark"] .message.error {
-      background: #450a0a;
-    }
-
     .input-area {
-      flex: 0 0 auto;
       border-top: 1px solid var(--border);
-      padding: 12px;
+      padding: 14px;
       background: var(--panel);
       display: flex;
       gap: 10px;
@@ -255,16 +230,16 @@
     textarea {
       flex: 1;
       min-height: 48px;
-      max-height: 160px;
+      max-height: 170px;
       resize: vertical;
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 12px;
       font-family: Arial, sans-serif;
       font-size: 14px;
-      background: var(--input-bg);
-      color: var(--text);
       outline: none;
+      background: var(--panel);
+      color: var(--text);
     }
 
     textarea:focus {
@@ -292,7 +267,6 @@
     }
 
     .hint {
-      flex: 0 0 auto;
       padding: 8px 14px;
       font-size: 11px;
       color: var(--muted);
@@ -301,15 +275,38 @@
     }
 
     @media (max-width: 760px) {
+      :root {
+        --bg: #0f172a;
+        --panel: #111827;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --border: #374151;
+        --primary: #3b82f6;
+        --primary-dark: #2563eb;
+        --user: #1e3a8a;
+        --bot: #1f2937;
+        --danger: #f87171;
+        --chip: #1e1b4b;
+      }
+
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+
       .app {
+        width: 100%;
+        height: 100dvh;
         max-width: none;
         border-left: none;
         border-right: none;
       }
 
       .header {
-        padding: 10px 12px;
-        grid-template-columns: 1fr auto;
+        padding: 12px 14px;
+        align-items: flex-start;
+        gap: 10px;
       }
 
       .title h1 {
@@ -317,47 +314,52 @@
       }
 
       .title span {
-        display: none;
+        font-size: 11px;
       }
 
-      .top-actions {
-        gap: 6px;
+      .header-actions {
+        flex-direction: column;
+        align-items: flex-end;
       }
 
       .session {
-        display: none;
+        max-width: 150px;
+        font-size: 10px;
+        text-align: right;
       }
 
       .menu-toggle {
-        display: inline-flex;
-        justify-content: center;
-        align-items: center;
+        display: inline-block;
       }
 
-      .top-panel {
-        max-height: 420px;
-        overflow: hidden;
-        transition: max-height 0.22s ease, border-width 0.22s ease;
-      }
-
-      body.mobile-menu-collapsed .top-panel {
-        max-height: 0;
-        border-bottom-width: 0;
+      .top-panel.mobile-collapsed {
+        display: none;
       }
 
       .controls,
+      .signin-card,
       .student-meta {
         grid-template-columns: 1fr;
         padding: 10px 12px;
         gap: 8px;
       }
 
-      .student-meta {
-        padding-top: 0;
+      .controls input,
+      .controls select,
+      .signin-card input,
+      .student-meta input,
+      textarea {
+        background: #0b1220;
+        color: var(--text);
+      }
+
+      input::placeholder,
+      textarea::placeholder {
+        color: #94a3b8;
       }
 
       .quick-actions {
-        padding: 8px 12px 10px;
+        padding: 8px 12px;
         overflow-x: auto;
         flex-wrap: nowrap;
         white-space: nowrap;
@@ -366,11 +368,14 @@
       .quick-actions button {
         flex: 0 0 auto;
         width: auto;
+        color: #c7d2fe;
       }
 
       .chat {
+        flex: 1;
         padding: 12px;
         gap: 10px;
+        overflow-y: auto;
       }
 
       .message {
@@ -388,7 +393,7 @@
 
       textarea {
         width: 100%;
-        min-height: 76px;
+        min-height: 70px;
         max-height: 130px;
         font-size: 14px;
       }
@@ -399,7 +404,7 @@
       }
 
       .hint {
-        padding: 7px 12px;
+        padding: 8px 12px;
         font-size: 10px;
       }
     }
@@ -413,15 +418,21 @@
         <h1>Autonomous Mentor Chat</h1>
         <span>Bootcamp mentor connected to Drive instructions and student progress</span>
       </div>
-      <div class="top-actions">
+      <div class="header-actions">
         <div class="session" id="sessionLabel"></div>
-        <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()">Menu</button>
+        <button class="menu-toggle" id="menuToggleBtn" onclick="toggleTopMenu()">Menu</button>
       </div>
     </div>
 
     <div class="top-panel" id="topPanel">
+      <div class="signin-card">
+        <input id="studentId" type="text" placeholder="Student ID, example: 001">
+        <input id="userName" type="text" placeholder="Name">
+        <input id="studentEmail" type="email" placeholder="Email">
+        <button onclick="signInStudent()">Sign In</button>
+      </div>
+
       <div class="controls">
-        <input id="userName" placeholder="Name, optional">
         <input id="userRole" placeholder="Role or class, optional">
         <select id="chatMode">
           <option value="mentor" selected>Venture Mentor</option>
@@ -429,13 +440,8 @@
           <option value="faq">Knowledge FAQ</option>
           <option value="general">General Assistant</option>
         </select>
-        <button onclick="newSession()">New Session</button>
-      </div>
-
-      <div class="student-meta">
-        <input id="studentId" type="text" placeholder="Student ID, example: 001">
-        <input id="studentEmail" type="email" placeholder="Student Email, optional">
         <input id="activityCode" type="text" placeholder="Activity, example: 1.1">
+        <button onclick="newSession()">New Session</button>
       </div>
 
       <div class="quick-actions">
@@ -451,10 +457,12 @@
       <div class="message bot">
 Welcome.
 
-Fill Student ID and Activity first.
+Sign in first with Student ID, Name, and Email.
 
 Example:
 Student ID: 001
+Name: Andi
+Email: andi@email.com
 Activity: 1.1
 
 Then type the student's answer. Type AGREE only after the mentor proposes a final response.
@@ -467,7 +475,7 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
     </div>
 
     <div class="hint">
-      Student ID must be typed in the Student ID box. On mobile, tap Menu to show or hide setup fields.
+      Student data is saved in one Google Sheet tab: STUDENT_PROGRESS.
     </div>
   </div>
 
@@ -480,10 +488,9 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
       localStorage.setItem("ai_drive_chatbot_session_id", sessionId);
     }
 
-    applyMobileDarkMode();
     restoreSavedFields();
     updateSessionLabel();
-    initializeMobileMenu();
+    setupMobileMenuDefault();
 
     const input = document.getElementById("messageInput");
 
@@ -513,46 +520,39 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
       }
     });
 
-    window.addEventListener("resize", function() {
-      applyMobileDarkMode();
-      initializeMobileMenu();
-    });
+    function isMobile() {
+      return window.matchMedia("(max-width: 760px)").matches;
+    }
 
-    function applyMobileDarkMode() {
-      if (window.matchMedia("(max-width: 760px)").matches) {
-        document.documentElement.setAttribute("data-theme", "dark");
-      } else {
-        document.documentElement.setAttribute("data-theme", "light");
+    function setupMobileMenuDefault() {
+      if (isMobile()) {
+        collapseTopMenu();
       }
     }
 
-    function initializeMobileMenu() {
-      if (window.matchMedia("(max-width: 760px)").matches) {
-        const saved = localStorage.getItem("mentor_mobile_menu_collapsed");
-        if (saved === null || saved === "true") {
-          document.body.classList.add("mobile-menu-collapsed");
-        } else {
-          document.body.classList.remove("mobile-menu-collapsed");
-        }
-        updateMenuButton();
+    function toggleTopMenu() {
+      const panel = document.getElementById("topPanel");
+      if (!panel) return;
+
+      if (panel.classList.contains("mobile-collapsed")) {
+        expandTopMenu();
       } else {
-        document.body.classList.remove("mobile-menu-collapsed");
+        collapseTopMenu();
       }
     }
 
-    function toggleMobileMenu() {
-      document.body.classList.toggle("mobile-menu-collapsed");
-      localStorage.setItem(
-        "mentor_mobile_menu_collapsed",
-        document.body.classList.contains("mobile-menu-collapsed") ? "true" : "false"
-      );
-      updateMenuButton();
+    function collapseTopMenu() {
+      const panel = document.getElementById("topPanel");
+      const btn = document.getElementById("menuToggleBtn");
+      if (panel) panel.classList.add("mobile-collapsed");
+      if (btn) btn.textContent = "Menu";
     }
 
-    function updateMenuButton() {
-      const btn = document.getElementById("menuToggle");
-      if (!btn) return;
-      btn.textContent = document.body.classList.contains("mobile-menu-collapsed") ? "Menu" : "Hide";
+    function expandTopMenu() {
+      const panel = document.getElementById("topPanel");
+      const btn = document.getElementById("menuToggleBtn");
+      if (panel) panel.classList.remove("mobile-collapsed");
+      if (btn) btn.textContent = "Hide";
     }
 
     function restoreSavedFields() {
@@ -585,7 +585,11 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
 
       const chat = document.getElementById("chat");
       chat.innerHTML = "";
-      addMessage("bot", "New session started. Fill Student ID and Activity, then send the student's answer.");
+      addMessage("bot", "New session started. Sign in, fill Activity, then send the student's answer.");
+
+      if (isMobile()) {
+        collapseTopMenu();
+      }
     }
 
     function quickAsk(text) {
@@ -645,61 +649,6 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
       return "";
     }
 
-    function scheduleStudentLookup() {
-      clearTimeout(studentLookupTimer);
-      studentLookupTimer = setTimeout(function() {
-        lookupStudentById();
-      }, 500);
-    }
-
-    async function lookupStudentById() {
-      const studentIdEl = document.getElementById("studentId");
-      const nameEl = document.getElementById("userName");
-      const emailEl = document.getElementById("studentEmail");
-      const roleEl = document.getElementById("userRole");
-      const studentId = studentIdEl ? studentIdEl.value.trim() : "";
-
-      if (!studentId) {
-        return;
-      }
-
-      try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            action: "getStudentProfile",
-            studentId: studentId
-          })
-        });
-
-        const res = await response.json();
-
-        if (!res || !res.ok || !res.found) {
-          return;
-        }
-
-        if (nameEl && res.name) {
-          nameEl.value = res.name;
-          localStorage.setItem("mentor_userName", res.name);
-        }
-
-        if (emailEl && res.email) {
-          emailEl.value = res.email;
-          localStorage.setItem("mentor_studentEmail", res.email);
-        }
-
-        if (roleEl && res.level) {
-          roleEl.value = res.level;
-          localStorage.setItem("mentor_userRole", res.level);
-        }
-      } catch (err) {
-        console.log("Student lookup failed:", err);
-      }
-    }
-
     function buildInteractivePrefix() {
       const userName = document.getElementById("userName").value.trim() || "Anonymous";
       const userRole = document.getElementById("userRole").value.trim() || "Student";
@@ -733,7 +682,102 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
       ].join("\n");
     }
 
-    async function sendMessage() {
+    function scheduleStudentLookup() {
+      clearTimeout(studentLookupTimer);
+
+      studentLookupTimer = setTimeout(function() {
+        lookupStudentById();
+      }, 500);
+    }
+
+    function lookupStudentById() {
+      const studentId = getStudentId_();
+      if (!studentId) return;
+
+      if (typeof google === "undefined" || !google.script || !google.script.run) {
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (!res || !res.ok || !res.found) return;
+
+          const nameEl = document.getElementById("userName");
+          const emailEl = document.getElementById("studentEmail");
+          const roleEl = document.getElementById("userRole");
+
+          if (nameEl && res.name) {
+            nameEl.value = res.name;
+            localStorage.setItem("mentor_userName", res.name);
+          }
+
+          if (emailEl && res.email) {
+            emailEl.value = res.email;
+            localStorage.setItem("mentor_studentEmail", res.email);
+          }
+
+          if (roleEl && res.level) {
+            roleEl.value = res.level;
+            localStorage.setItem("mentor_userRole", res.level);
+          }
+        })
+        .withFailureHandler(function(err) {
+          console.log("Student lookup failed:", err);
+        })
+        .getStudentProfileById_(studentId);
+    }
+
+    function signInStudent() {
+      const studentId = getStudentId_();
+      const name = document.getElementById("userName").value.trim();
+      const email = getStudentEmail_();
+      const level = document.getElementById("userRole").value.trim() || "Student";
+
+      if (!studentId || !name || !email) {
+        addMessage("error", "Please fill Student ID, Name, and Email.");
+        return;
+      }
+
+      if (typeof google === "undefined" || !google.script || !google.script.run) {
+        addMessage("error", "Google Apps Script client is not available. Open this page from the Apps Script Web App, or use the Vercel fetch version.");
+        return;
+      }
+
+      setLoading(true);
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          setLoading(false);
+
+          if (!res || !res.ok) {
+            addMessage("error", res && res.error ? res.error : "Sign in failed.");
+            return;
+          }
+
+          localStorage.setItem("mentor_studentId", res.studentId || studentId);
+          localStorage.setItem("mentor_userName", res.name || name);
+          localStorage.setItem("mentor_studentEmail", res.email || email);
+          localStorage.setItem("mentor_userRole", res.level || level);
+
+          addMessage("bot", (res.message || "Student signed in successfully.") + "\n\nStudent ID: " + (res.studentId || studentId));
+
+          if (isMobile()) {
+            collapseTopMenu();
+          }
+        })
+        .withFailureHandler(function(err) {
+          setLoading(false);
+          addMessage("error", err && err.message ? err.message : String(err));
+        })
+        .signInStudent({
+          studentId: studentId,
+          name: name,
+          email: email,
+          level: level
+        });
+    }
+
+    function sendMessage() {
       const rawMessage = input.value.trim();
       const userName = document.getElementById("userName").value.trim() || "Anonymous";
       const userRole = document.getElementById("userRole").value.trim() || "Student";
@@ -750,49 +794,42 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
 
       const fullMessage = buildInteractivePrefix() + "\n" + rawMessage;
 
-      try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            message: fullMessage,
-            sessionId: sessionId,
-            studentId: getStudentId_(),
-            userName: userName,
-            userEmail: getStudentEmail_(),
-            userRole: userRole || "Student",
-            chatMode: chatMode || "mentor",
-            activityCode: activityCode
-          })
+      google.script.run
+        .withSuccessHandler(function(res) {
+          setLoading(false);
+
+          if (!res || !res.ok) {
+            addMessage("error", res && res.error ? res.error : "Unknown server error.");
+            return;
+          }
+
+          sessionId = res.sessionId || sessionId;
+          localStorage.setItem("ai_drive_chatbot_session_id", sessionId);
+          updateSessionLabel();
+
+          addMessage("bot", res.answer || "No answer returned.");
+
+          if (isMobile()) {
+            collapseTopMenu();
+          }
+        })
+        .withFailureHandler(function(err) {
+          setLoading(false);
+          addMessage("error", err && err.message ? err.message : String(err));
+        })
+        .chatbotApi({
+          message: fullMessage,
+          sessionId: sessionId,
+          studentId: getStudentId_(),
+          userName: userName,
+          userEmail: getStudentEmail_(),
+          userRole: userRole || "Student",
+          chatMode: chatMode || "mentor",
+          activityCode: activityCode
         });
-
-        const res = await response.json();
-        setLoading(false);
-
-        if (!res || !res.ok) {
-          addMessage("error", res && res.error ? res.error : "Unknown server error.");
-          return;
-        }
-
-        sessionId = res.sessionId || sessionId;
-        localStorage.setItem("ai_drive_chatbot_session_id", sessionId);
-        updateSessionLabel();
-
-        addMessage("bot", res.answer || "No answer returned.");
-
-        if (window.matchMedia("(max-width: 760px)").matches) {
-          document.body.classList.add("mobile-menu-collapsed");
-          localStorage.setItem("mentor_mobile_menu_collapsed", "true");
-          updateMenuButton();
-        }
-      } catch (err) {
-        setLoading(false);
-        addMessage("error", err && err.message ? err.message : String(err));
-      }
     }
   </script>
 </body>
 </html>
+
 
