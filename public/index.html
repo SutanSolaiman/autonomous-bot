@@ -108,15 +108,15 @@
       align-items: center;
     }
 
-.controls {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
-  background: var(--panel);
-  display: grid;
-  grid-template-columns: 1fr 180px 160px 120px;
-  gap: 8px;
-  align-items: center;
-}
+    .controls {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
 
     .signin-card input,
     .controls input,
@@ -427,16 +427,16 @@
       </div>
 
       <div class="controls">
-  <input id="userRole" placeholder="Role or class, optional">
-  <select id="chatMode">
-    <option value="mentor" selected>Venture Mentor</option>
-    <option value="assessment">Assessment Coach</option>
-    <option value="faq">Knowledge FAQ</option>
-    <option value="general">General Assistant</option>
-  </select>
-  <input id="activityCode" type="text" placeholder="Activity, example: 1.1">
-  <button onclick="newSession()">New Session</button>
-</div>>
+        <input id="userRole" placeholder="Role or class, optional">
+        <select id="chatMode">
+          <option value="mentor" selected>Venture Mentor</option>
+          <option value="assessment">Assessment Coach</option>
+          <option value="faq">Knowledge FAQ</option>
+          <option value="general">General Assistant</option>
+        </select>
+        <input id="activityCode" type="text" placeholder="Activity, example: 1.1">
+        <button onclick="newSession()">New Session</button>
+      </div>
 
       <div class="quick-actions">
         <button onclick="quickAsk('Start by asking me the right diagnostic questions.')">Start diagnostic</button>
@@ -476,6 +476,7 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
   <script>
     let sessionId = localStorage.getItem("ai_drive_chatbot_session_id");
     let studentLookupTimer = null;
+    let currentStudentExists = null;
     let isSignedIn = localStorage.getItem("mentor_signedIn") === "true";
 
     if (!sessionId) {
@@ -486,6 +487,7 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
     restoreSavedFields();
     updateSessionLabel();
     updateSignInButton();
+    if (!isSignedIn && getStudentId_()) { scheduleStudentLookup(); }
     setupMobileMenuDefault();
 
     const input = document.getElementById("messageInput");
@@ -505,6 +507,8 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
         localStorage.setItem("mentor_" + id, el.value || "");
 
         if (id === "studentId" && !isSignedIn) {
+          currentStudentExists = null;
+          updateSignInButton();
           scheduleStudentLookup();
         }
       });
@@ -692,7 +696,12 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
 
     async function lookupStudentById() {
       const studentId = getStudentId_();
-      if (!studentId) return;
+
+      if (!studentId) {
+        currentStudentExists = null;
+        updateSignInButton();
+        return;
+      }
 
       try {
         const res = await apiPost({
@@ -700,7 +709,18 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
           studentId: studentId
         });
 
-        if (!res || !res.ok || !res.found) return;
+        if (!res || !res.ok) {
+          currentStudentExists = null;
+          updateSignInButton();
+          return;
+        }
+
+        currentStudentExists = res.found === true;
+        updateSignInButton();
+
+        if (!res.found) {
+          return;
+        }
 
         const nameEl = document.getElementById("userName");
         const emailEl = document.getElementById("studentEmail");
@@ -721,6 +741,8 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
           localStorage.setItem("mentor_userRole", res.level);
         }
       } catch (err) {
+        currentStudentExists = null;
+        updateSignInButton();
         console.log("Student lookup failed:", err);
       }
     }
@@ -729,13 +751,22 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
       const btn = document.getElementById("signinToggleBtn");
       if (!btn) return;
 
+      const studentId = getStudentId_();
+
       if (isSignedIn) {
         btn.textContent = "Sign Out";
         btn.classList.add("signed-in");
-      } else {
-        btn.textContent = "Sign In";
-        btn.classList.remove("signed-in");
+        return;
       }
+
+      btn.classList.remove("signed-in");
+
+      if (!studentId) {
+        btn.textContent = "Sign In";
+        return;
+      }
+
+      btn.textContent = currentStudentExists === false ? "Sign On" : "Sign In";
     }
 
     function clearLocalStudentData() {
@@ -751,6 +782,7 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
       localStorage.removeItem("mentor_userRole");
       localStorage.setItem("mentor_signedIn", "false");
       isSignedIn = false;
+      currentStudentExists = null;
       updateSignInButton();
     }
 
@@ -798,6 +830,7 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
         localStorage.setItem("mentor_signedIn", "true");
 
         isSignedIn = true;
+        currentStudentExists = true;
         updateSignInButton();
 
         addMessage("bot", (res.message || "Student signed in successfully.") + "\n\nStudent ID: " + (res.studentId || studentId));
@@ -934,6 +967,7 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
   </script>
 </body>
 </html>
+
 
 
 
