@@ -113,7 +113,7 @@
       border-bottom: 1px solid var(--border);
       background: var(--panel);
       display: grid;
-      grid-template-columns: 1fr 1fr auto;
+      grid-template-columns: minmax(160px, 1fr) 180px 150px 120px;
       gap: 8px;
       align-items: center;
     }
@@ -427,14 +427,14 @@
       </div>
 
       <div class="controls">
-        <input id="userRole" placeholder="Role or class, optional">
+        <input id="userRole" placeholder="Student">
         <select id="chatMode">
           <option value="mentor" selected>Venture Mentor</option>
           <option value="assessment">Assessment Coach</option>
           <option value="faq">Knowledge FAQ</option>
           <option value="general">General Assistant</option>
         </select>
-        <input id="activityCode" type="text" placeholder="Activity, example: 1.1">
+        <input id="activityCode" type="text" placeholder="Activity">
         <button onclick="newSession()">New Session</button>
       </div>
 
@@ -886,33 +886,27 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
       let payload = res.answer || res.response || res.data || res;
 
       if (typeof payload === "string") {
-        try {
-          payload = JSON.parse(payload);
-        } catch (err) {
-         if (typeof payload === "string") {
-  const cleaned = payload
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/```$/i, "")
-    .trim();
+        const cleaned = payload
+          .replace(/^```json\s*/i, "")
+          .replace(/^```\s*/i, "")
+          .replace(/```$/i, "")
+          .trim();
 
-  try {
-    payload = JSON.parse(cleaned);
-  } catch (err) {
-    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      try {
-        payload = JSON.parse(jsonMatch[0]);
-      } catch (err2) {
-        addMessage("bot", cleaned);
-        return;
-      }
-    } else {
-      addMessage("bot", cleaned);
-      return;
-    }
-  }
-}
+        try {
+          payload = JSON.parse(cleaned);
+        } catch (err) {
+          const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try {
+              payload = JSON.parse(jsonMatch[0]);
+            } catch (err2) {
+              addMessage("bot", cleaned);
+              return;
+            }
+          } else {
+            addMessage("bot", cleaned);
+            return;
+          }
         }
       }
 
@@ -970,25 +964,7 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
         setLoading(false);
 
         if (!res || !res.ok) {
-          addMessage("error", res && res.error ? res.error : "Unknown server error.");
-          return;
-        }
-
-        sessionId = res.sessionId || sessionId;
-        localStorage.setItem("ai_drive_chatbot_session_id", sessionId);
-        updateSessionLabel();
-
-        renderMentorResponse(res);
-
-        if (isMobile()) collapseTopMenu();
-      } catch (err) {
-        setLoading(false);
-        addMessage("error", err && err.message ? err.message : String(err));
-      }
-    }
-  </script>
-</body>
-</html>
+          addMessage("error", res && res.error ? res.error : "Unkno
 
 
 
