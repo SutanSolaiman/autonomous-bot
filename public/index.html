@@ -833,7 +833,7 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
         localStorage.setItem("ai_drive_chatbot_session_id", sessionId);
         updateSessionLabel();
 
-        addMessage("bot", res.answer || "No answer returned.");
+        renderMentorResponse(res);
 
         if (isMobile()) {
           collapseTopMenu();
@@ -843,6 +843,75 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
         setLoading(false);
         addMessage("error", err && err.message ? err.message : String(err));
       }
+
+
+function renderMentorResponse(res) {
+  if (!res) {
+    addMessage("error", "Empty response.");
+    return;
+  }
+
+  let payload = res.answer || res.response || res.data || res;
+
+  if (typeof payload === "string") {
+    try {
+      payload = JSON.parse(payload);
+    } catch (err) {
+      addMessage("bot", payload);
+      return;
+    }
+  }
+
+  if (typeof payload !== "object") {
+    addMessage("bot", String(payload));
+    return;
+  }
+
+  const sections = [];
+
+  if (payload.activity_code) {
+    sections.push("Activity: " + payload.activity_code);
+  }
+
+  if (payload.question) {
+    sections.push("Question:\n" + payload.question);
+  }
+
+  if (payload.feedback) {
+    sections.push("Feedback:\n" + payload.feedback);
+  }
+
+  if (payload.pushback) {
+    sections.push("Improve this:\n" + payload.pushback);
+  }
+
+  if (payload.proposed_response) {
+    sections.push("Suggested Response:\n" + payload.proposed_response);
+  }
+
+  if (payload.score !== undefined) {
+    sections.push(
+      "Score: " +
+      payload.score +
+      " | Level: " +
+      (payload.rubric_level || "-")
+    );
+  }
+
+  if (payload.word_limit) {
+    sections.push("Word Limit: " + payload.word_limit);
+  }
+
+  if (payload.next_question) {
+    sections.push("Next:\n" + payload.next_question);
+  }
+
+  const finalText = sections.join("\n\n");
+
+  addMessage("bot", finalText || JSON.stringify(payload, null, 2));
+}
+
+      
     }
 
   </script>
