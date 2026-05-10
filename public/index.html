@@ -103,7 +103,7 @@
       border-bottom: 1px solid var(--border);
       background: var(--panel);
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr auto;
+      grid-template-columns: minmax(120px, 1fr) minmax(160px, 1fr) minmax(180px, 1fr) 110px;
       gap: 10px;
       align-items: center;
     }
@@ -113,7 +113,7 @@
       border-bottom: 1px solid var(--border);
       background: var(--panel);
       display: grid;
-      grid-template-columns: minmax(160px, 1fr) 180px 150px 120px;
+      grid-template-columns: minmax(120px, 1fr) 180px 150px 120px;
       gap: 8px;
       align-items: center;
     }
@@ -143,6 +143,14 @@
 
     .signin-toggle-btn.signed-in:hover {
       background: #7f1d1d;
+    }
+
+    .signin-toggle-btn.sign-on {
+      background: #047857;
+    }
+
+    .signin-toggle-btn.sign-on:hover {
+      background: #065f46;
     }
 
     .controls button {
@@ -459,7 +467,12 @@ Name: Andi
 Email: andi@email.com
 Activity: 1.1
 
-After Sign In, the button becomes Sign Out. Sign Out clears local student data from this page.
+Button behavior:
+- Empty ID: Sign In
+- Existing ID: Sign In
+- New ID: Sign On
+- After signed in: Sign Out
+- After Sign Out: fields are cleared and button returns to Sign In
       </div>
     </div>
 
@@ -477,7 +490,8 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
     let sessionId = localStorage.getItem("ai_drive_chatbot_session_id");
     let studentLookupTimer = null;
     let currentStudentExists = null;
-    let isSignedIn = localStorage.getItem("mentor_signedIn") === "true";
+    let isSignedIn = localStorage.getItem("mentor_signedIn") === "true" &&
+      !!localStorage.getItem("mentor_studentId");
 
     if (!sessionId) {
       sessionId = makeSessionId();
@@ -485,9 +499,19 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
     }
 
     restoreSavedFields();
+
+    if (!getStudentId_()) {
+      isSignedIn = false;
+      localStorage.setItem("mentor_signedIn", "false");
+    }
+
     updateSessionLabel();
     updateSignInButton();
-    if (!isSignedIn && getStudentId_()) { scheduleStudentLookup(); }
+
+    if (!isSignedIn && getStudentId_()) {
+      scheduleStudentLookup();
+    }
+
     setupMobileMenuDefault();
 
     const input = document.getElementById("messageInput");
@@ -506,7 +530,9 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
       el.addEventListener("input", function() {
         localStorage.setItem("mentor_" + id, el.value || "");
 
-        if (id === "studentId" && !isSignedIn) {
+        if (id === "studentId") {
+          isSignedIn = false;
+          localStorage.setItem("mentor_signedIn", "false");
           currentStudentExists = null;
           updateSignInButton();
           scheduleStudentLookup();
@@ -600,9 +626,15 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
     function setLoading(isLoading) {
       const sendBtn = document.getElementById("sendBtn");
       const signBtn = document.getElementById("signinToggleBtn");
-      sendBtn.disabled = isLoading;
-      sendBtn.textContent = isLoading ? "Sending..." : "Send";
-      signBtn.disabled = isLoading;
+
+      if (sendBtn) {
+        sendBtn.disabled = isLoading;
+        sendBtn.textContent = isLoading ? "Sending..." : "Send";
+      }
+
+      if (signBtn) {
+        signBtn.disabled = isLoading;
+      }
     }
 
     function getStudentId_() {
@@ -666,6 +698,13 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
 
     function scheduleStudentLookup() {
       clearTimeout(studentLookupTimer);
+
+      if (!getStudentId_()) {
+        currentStudentExists = null;
+        updateSignInButton();
+        return;
+      }
+
       studentLookupTimer = setTimeout(function() {
         lookupStudentById();
       }, 500);
@@ -681,6 +720,7 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
       });
 
       let res;
+
       try {
         res = await response.json();
       } catch (err) {
@@ -753,24 +793,31 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
 
       const studentId = getStudentId_();
 
-      if (isSignedIn) {
+      btn.classList.remove("signed-in");
+      btn.classList.remove("sign-on");
+
+      if (isSignedIn && studentId) {
         btn.textContent = "Sign Out";
         btn.classList.add("signed-in");
         return;
       }
-
-      btn.classList.remove("signed-in");
 
       if (!studentId) {
         btn.textContent = "Sign In";
         return;
       }
 
-      btn.textContent = currentStudentExists === false ? "Sign On" : "Sign In";
+      if (currentStudentExists === false) {
+        btn.textContent = "Sign On";
+        btn.classList.add("sign-on");
+        return;
+      }
+
+      btn.textContent = "Sign In";
     }
 
     function clearLocalStudentData() {
-      const ids = ["studentId", "userName", "studentEmail", "userRole"];
+      const ids = ["studentId", "userName", "studentEmail", "userRole", "activityCode"];
       ids.forEach(function(id) {
         const el = document.getElementById(id);
         if (el) el.value = "";
@@ -780,14 +827,16 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
       localStorage.removeItem("mentor_userName");
       localStorage.removeItem("mentor_studentEmail");
       localStorage.removeItem("mentor_userRole");
+      localStorage.removeItem("mentor_activityCode");
       localStorage.setItem("mentor_signedIn", "false");
+
       isSignedIn = false;
       currentStudentExists = null;
       updateSignInButton();
     }
 
     async function toggleSignInOut() {
-      if (isSignedIn) {
+      if (isSignedIn && getStudentId_()) {
         await signOutStudent();
       } else {
         await signInStudent();
@@ -835,6 +884,10 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
 
         addMessage("bot", (res.message || "Student signed in successfully.") + "\n\nStudent ID: " + (res.studentId || studentId));
 
+        if (res.latest) {
+          renderSavedProgress(res.latest);
+        }
+
         if (isMobile()) collapseTopMenu();
       } catch (err) {
         setLoading(false);
@@ -868,13 +921,38 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
         }
 
         clearLocalStudentData();
-        addMessage("bot", (res.message || "Student signed out.") + "\n\nLocal student data cleared.");
+        addMessage("bot", (res.message || "Student signed out.") + "\n\nStudent fields cleared. Button reset to Sign In.");
 
         if (isMobile()) expandTopMenu();
       } catch (err) {
         setLoading(false);
         addMessage("error", err && err.message ? err.message : String(err));
       }
+    }
+
+    function renderSavedProgress(latest) {
+      if (!latest) return;
+
+      const activityEl = document.getElementById("activityCode");
+
+      if (activityEl && latest.activityCode) {
+        activityEl.value = latest.activityCode;
+        localStorage.setItem("mentor_activityCode", latest.activityCode);
+      }
+
+      addMessage("bot", [
+        "Previous progress found.",
+        "",
+        "Last Activity: " + (latest.activityCode || "-"),
+        "Status: " + (latest.status || "-"),
+        "Score: " + (latest.score || "-"),
+        "",
+        "Saved Response:",
+        latest.response || "-",
+        "",
+        "Feedback:",
+        latest.feedback || "-"
+      ].join("\n"));
     }
 
     function renderMentorResponse(res) {
@@ -896,6 +974,7 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
           payload = JSON.parse(cleaned);
         } catch (err) {
           const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+
           if (jsonMatch) {
             try {
               payload = JSON.parse(jsonMatch[0]);
@@ -964,7 +1043,26 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
         setLoading(false);
 
         if (!res || !res.ok) {
-          addMessage("error", res && res.error ? res.error : "Unkno
+          addMessage("error", res && res.error ? res.error : "Unknown server error.");
+          return;
+        }
+
+        sessionId = res.sessionId || sessionId;
+        localStorage.setItem("ai_drive_chatbot_session_id", sessionId);
+        updateSessionLabel();
+
+        renderMentorResponse(res);
+
+        if (isMobile()) collapseTopMenu();
+      } catch (err) {
+        setLoading(false);
+        addMessage("error", err && err.message ? err.message : String(err));
+      }
+    }
+  </script>
+</body>
+</html>
+
 
 
 
