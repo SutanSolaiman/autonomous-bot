@@ -98,45 +98,29 @@
       border-bottom: 1px solid var(--border);
     }
 
+    .signin-card {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
     .controls {
       padding: 12px 14px;
       border-bottom: 1px solid var(--border);
       background: var(--panel);
       display: grid;
-     grid-template-columns: 1fr 1fr 1fr auto auto;
+      grid-template-columns: 1fr 1fr auto;
       gap: 8px;
       align-items: center;
     }
 
-.signin-card {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
-  background: var(--panel);
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto;
-  gap: 10px;
-  align-items: center;
-}
-.signout-btn {
-  background: #991b1b;
-}
-
-.signout-btn:hover {
-  background: #7f1d1d;
-}
-    .student-meta {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      background: var(--panel);
-      display: grid;
-      grid-template-columns: 1fr 1fr 160px;
-      gap: 10px;
-    }
-
-    .controls input,
-    .controls select,
     .signin-card input,
-    .student-meta input {
+    .controls input,
+    .controls select {
       width: 100%;
       border: 1px solid var(--border);
       border-radius: 10px;
@@ -147,11 +131,18 @@
       outline: none;
     }
 
-    .controls input:focus,
-    .controls select:focus,
     .signin-card input:focus,
-    .student-meta input:focus {
+    .controls input:focus,
+    .controls select:focus {
       border-color: var(--primary);
+    }
+
+    .signin-toggle-btn.signed-in {
+      background: #991b1b;
+    }
+
+    .signin-toggle-btn.signed-in:hover {
+      background: #7f1d1d;
     }
 
     .controls button {
@@ -341,18 +332,16 @@
         display: none;
       }
 
-      .controls,
       .signin-card,
-      .student-meta {
+      .controls {
         grid-template-columns: 1fr;
         padding: 10px 12px;
         gap: 8px;
       }
 
+      .signin-card input,
       .controls input,
       .controls select,
-      .signin-card input,
-      .student-meta input,
       textarea {
         background: #0b1220;
         color: var(--text);
@@ -431,12 +420,11 @@
 
     <div class="top-panel" id="topPanel">
       <div class="signin-card">
-  <input id="studentId" type="text" placeholder="Student ID, example: 001">
-  <input id="userName" type="text" placeholder="Name">
-  <input id="studentEmail" type="email" placeholder="Email">
-  <button onclick="signInStudent()">Sign In</button>
-  <button onclick="signOutStudent()" class="signout-btn">Sign Out</button>
-</div>
+        <input id="studentId" type="text" placeholder="Student ID, example: 001">
+        <input id="userName" type="text" placeholder="Name">
+        <input id="studentEmail" type="email" placeholder="Email">
+        <button id="signinToggleBtn" class="signin-toggle-btn" onclick="toggleSignInOut()">Sign In</button>
+      </div>
 
       <div class="controls">
         <input id="userRole" placeholder="Role or class, optional">
@@ -471,7 +459,7 @@ Name: Andi
 Email: andi@email.com
 Activity: 1.1
 
-Then type the student's answer. Type AGREE only after the mentor proposes a final response.
+After Sign In, the button becomes Sign Out. Sign Out clears local student data from this page.
       </div>
     </div>
 
@@ -488,6 +476,7 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
   <script>
     let sessionId = localStorage.getItem("ai_drive_chatbot_session_id");
     let studentLookupTimer = null;
+    let isSignedIn = localStorage.getItem("mentor_signedIn") === "true";
 
     if (!sessionId) {
       sessionId = makeSessionId();
@@ -496,6 +485,7 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
 
     restoreSavedFields();
     updateSessionLabel();
+    updateSignInButton();
     setupMobileMenuDefault();
 
     const input = document.getElementById("messageInput");
@@ -514,14 +504,14 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
       el.addEventListener("input", function() {
         localStorage.setItem("mentor_" + id, el.value || "");
 
-        if (id === "studentId") {
+        if (id === "studentId" && !isSignedIn) {
           scheduleStudentLookup();
         }
       });
 
       if (id === "studentId") {
         el.addEventListener("blur", function() {
-          lookupStudentById();
+          if (!isSignedIn) lookupStudentById();
         });
       }
     });
@@ -531,20 +521,15 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
     }
 
     function setupMobileMenuDefault() {
-      if (isMobile()) {
-        collapseTopMenu();
-      }
+      if (isMobile()) collapseTopMenu();
     }
 
     function toggleTopMenu() {
       const panel = document.getElementById("topPanel");
       if (!panel) return;
 
-      if (panel.classList.contains("mobile-collapsed")) {
-        expandTopMenu();
-      } else {
-        collapseTopMenu();
-      }
+      if (panel.classList.contains("mobile-collapsed")) expandTopMenu();
+      else collapseTopMenu();
     }
 
     function collapseTopMenu() {
@@ -567,9 +552,7 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
         if (!el) return;
 
         const saved = localStorage.getItem("mentor_" + id);
-        if (saved) {
-          el.value = saved;
-        }
+        if (saved) el.value = saved;
       });
     }
 
@@ -593,9 +576,7 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
       chat.innerHTML = "";
       addMessage("bot", "New session started. Sign in, fill Activity, then send the student's answer.");
 
-      if (isMobile()) {
-        collapseTopMenu();
-      }
+      if (isMobile()) collapseTopMenu();
     }
 
     function quickAsk(text) {
@@ -608,14 +589,16 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
       const div = document.createElement("div");
       div.className = "message " + type;
       div.textContent = text;
-
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
     }
 
     function setLoading(isLoading) {
-      document.getElementById("sendBtn").disabled = isLoading;
-      document.getElementById("sendBtn").textContent = isLoading ? "Sending..." : "Send";
+      const sendBtn = document.getElementById("sendBtn");
+      const signBtn = document.getElementById("signinToggleBtn");
+      sendBtn.disabled = isLoading;
+      sendBtn.textContent = isLoading ? "Sending..." : "Send";
+      signBtn.disabled = isLoading;
     }
 
     function getStudentId_() {
@@ -631,26 +614,15 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
     function getCurrentActivityCode_() {
       const el = document.getElementById("activityCode");
       const value = el ? el.value.trim() : "";
-
-      if (value) {
-        return value;
-      }
-
-      return detectActivityFromMessage_(document.getElementById("messageInput").value || "");
+      return value || detectActivityFromMessage_(document.getElementById("messageInput").value || "");
     }
 
     function detectActivityFromMessage_(text) {
       const activityMatch = String(text || "").match(/(?:Activity|Aktivitas|Kegiatan)\s*([0-9]{1,2}\.[0-9]{1,2})/i);
-
-      if (activityMatch && activityMatch[1]) {
-        return activityMatch[1];
-      }
+      if (activityMatch && activityMatch[1]) return activityMatch[1];
 
       const plainMatch = String(text || "").match(/\b([0-9]{1,2}\.[0-9]{1,2})\b/);
-
-      if (plainMatch && plainMatch[1]) {
-        return plainMatch[1];
-      }
+      if (plainMatch && plainMatch[1]) return plainMatch[1];
 
       return "";
     }
@@ -690,10 +662,32 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
 
     function scheduleStudentLookup() {
       clearTimeout(studentLookupTimer);
-
       studentLookupTimer = setTimeout(function() {
         lookupStudentById();
       }, 500);
+    }
+
+    async function apiPost(payload) {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      let res;
+      try {
+        res = await response.json();
+      } catch (err) {
+        throw new Error("Server returned non-JSON response.");
+      }
+
+      if (!response.ok) {
+        throw new Error(res && res.error ? res.error : "Server request failed.");
+      }
+
+      return res;
     }
 
     async function lookupStudentById() {
@@ -701,18 +695,10 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
       if (!studentId) return;
 
       try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            action: "getStudentProfile",
-            studentId: studentId
-          })
+        const res = await apiPost({
+          action: "getStudentProfile",
+          studentId: studentId
         });
-
-        const res = await response.json();
 
         if (!res || !res.ok || !res.found) return;
 
@@ -734,177 +720,220 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
           roleEl.value = res.level;
           localStorage.setItem("mentor_userRole", res.level);
         }
-
       } catch (err) {
         console.log("Student lookup failed:", err);
       }
     }
 
-   async function signInStudent() {
-  const studentId = getStudentId_();
-  const name = document.getElementById("userName").value.trim();
-  const email = getStudentEmail_();
-  const level = document.getElementById("userRole").value.trim() || "Student";
+    function updateSignInButton() {
+      const btn = document.getElementById("signinToggleBtn");
+      if (!btn) return;
 
-  if (!studentId || !name || !email) {
-    addMessage("error", "Please fill Student ID, Name, and Email.");
-    return;
-  }
-
-  try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        action: "signInStudent",
-        studentId: studentId,
-        name: name,
-        email: email,
-        level: level
-      })
-    });
-
-    const res = await response.json();
-
-    if (!res || !res.ok) {
-      addMessage("error", res && res.error ? res.error : "Sign in failed.");
-      return;
+      if (isSignedIn) {
+        btn.textContent = "Sign Out";
+        btn.classList.add("signed-in");
+      } else {
+        btn.textContent = "Sign In";
+        btn.classList.remove("signed-in");
+      }
     }
 
-    localStorage.setItem("mentor_studentId", res.studentId);
-    localStorage.setItem("mentor_userName", res.name);
-    localStorage.setItem("mentor_studentEmail", res.email);
-    localStorage.setItem("mentor_userRole", res.level);
+    function clearLocalStudentData() {
+      const ids = ["studentId", "userName", "studentEmail", "userRole"];
+      ids.forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+      });
 
-    addMessage("bot", res.message + "\n\nStudent ID: " + res.studentId);
-
-    if (isMobile()) collapseTopMenu();
-
-  } catch (err) {
-    addMessage("error", err && err.message ? err.message : String(err));
-  }
-}
-
-async function signOutStudent() {
-  const studentId = getStudentId_();
-
-  if (!studentId) {
-    addMessage("error", "Student ID is required to sign out.");
-    return;
-  }
-
-  try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        action: "signOutStudent",
-        studentId: studentId
-      })
-    });
-
-    const res = await response.json();
-
-    if (!res || !res.ok) {
-      addMessage("error", res && res.error ? res.error : "Sign out failed.");
-      return;
+      localStorage.removeItem("mentor_studentId");
+      localStorage.removeItem("mentor_userName");
+      localStorage.removeItem("mentor_studentEmail");
+      localStorage.removeItem("mentor_userRole");
+      localStorage.setItem("mentor_signedIn", "false");
+      isSignedIn = false;
+      updateSignInButton();
     }
 
-    document.getElementById("studentId").value = "";
-    document.getElementById("userName").value = "";
-    document.getElementById("studentEmail").value = "";
-    document.getElementById("userRole").value = "";
-
-    localStorage.removeItem("mentor_studentId");
-    localStorage.removeItem("mentor_userName");
-    localStorage.removeItem("mentor_studentEmail");
-    localStorage.removeItem("mentor_userRole");
-
-    addMessage("bot", res.message + "\n\nLocal student data cleared.");
-
-    if (isMobile()) expandTopMenu();
-
-  } catch (err) {
-    addMessage("error", err && err.message ? err.message : String(err));
-  }
-}
-
-
-function renderMentorResponse(res) {
-  if (!res) {
-    addMessage("error", "Empty response.");
-    return;
-  }
-
-  let payload = res.answer || res.response || res.data || res;
-
-  if (typeof payload === "string") {
-    try {
-      payload = JSON.parse(payload);
-    } catch (err) {
-      addMessage("bot", payload);
-      return;
-    }
-  }
-
-  if (typeof payload !== "object") {
-    addMessage("bot", String(payload));
-    return;
-  }
-
-  const sections = [];
-
-  if (payload.activity_code) {
-    sections.push("Activity: " + payload.activity_code);
-  }
-
-  if (payload.question) {
-    sections.push("Question:\n" + payload.question);
-  }
-
-  if (payload.feedback) {
-    sections.push("Feedback:\n" + payload.feedback);
-  }
-
-  if (payload.pushback) {
-    sections.push("Improve this:\n" + payload.pushback);
-  }
-
-  if (payload.proposed_response) {
-    sections.push("Suggested Response:\n" + payload.proposed_response);
-  }
-
-  if (payload.score !== undefined) {
-    sections.push(
-      "Score: " +
-      payload.score +
-      " | Level: " +
-      (payload.rubric_level || "-")
-    );
-  }
-
-  if (payload.word_limit) {
-    sections.push("Word Limit: " + payload.word_limit);
-  }
-
-  if (payload.next_question) {
-    sections.push("Next:\n" + payload.next_question);
-  }
-
-  const finalText = sections.join("\n\n");
-
-  addMessage("bot", finalText || JSON.stringify(payload, null, 2));
-}
-
-      
+    async function toggleSignInOut() {
+      if (isSignedIn) {
+        await signOutStudent();
+      } else {
+        await signInStudent();
+      }
     }
 
+    async function signInStudent() {
+      const studentId = getStudentId_();
+      const name = document.getElementById("userName").value.trim();
+      const email = getStudentEmail_();
+      const level = document.getElementById("userRole").value.trim() || "Student";
+
+      if (!studentId || !name || !email) {
+        addMessage("error", "Please fill Student ID, Name, and Email.");
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const res = await apiPost({
+          action: "signInStudent",
+          studentId: studentId,
+          name: name,
+          email: email,
+          level: level
+        });
+
+        setLoading(false);
+
+        if (!res || !res.ok) {
+          addMessage("error", res && res.error ? res.error : "Sign in failed.");
+          return;
+        }
+
+        localStorage.setItem("mentor_studentId", res.studentId || studentId);
+        localStorage.setItem("mentor_userName", res.name || name);
+        localStorage.setItem("mentor_studentEmail", res.email || email);
+        localStorage.setItem("mentor_userRole", res.level || level);
+        localStorage.setItem("mentor_signedIn", "true");
+
+        isSignedIn = true;
+        updateSignInButton();
+
+        addMessage("bot", (res.message || "Student signed in successfully.") + "\n\nStudent ID: " + (res.studentId || studentId));
+
+        if (isMobile()) collapseTopMenu();
+      } catch (err) {
+        setLoading(false);
+        addMessage("error", err && err.message ? err.message : String(err));
+      }
+    }
+
+    async function signOutStudent() {
+      const studentId = getStudentId_();
+
+      if (!studentId) {
+        clearLocalStudentData();
+        addMessage("bot", "Signed out locally. Student fields cleared.");
+        if (isMobile()) expandTopMenu();
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const res = await apiPost({
+          action: "signOutStudent",
+          studentId: studentId
+        });
+
+        setLoading(false);
+
+        if (!res || !res.ok) {
+          addMessage("error", res && res.error ? res.error : "Sign out failed.");
+          return;
+        }
+
+        clearLocalStudentData();
+        addMessage("bot", (res.message || "Student signed out.") + "\n\nLocal student data cleared.");
+
+        if (isMobile()) expandTopMenu();
+      } catch (err) {
+        setLoading(false);
+        addMessage("error", err && err.message ? err.message : String(err));
+      }
+    }
+
+    function renderMentorResponse(res) {
+      if (!res) {
+        addMessage("error", "Empty response.");
+        return;
+      }
+
+      let payload = res.answer || res.response || res.data || res;
+
+      if (typeof payload === "string") {
+        try {
+          payload = JSON.parse(payload);
+        } catch (err) {
+          addMessage("bot", payload);
+          return;
+        }
+      }
+
+      if (typeof payload !== "object") {
+        addMessage("bot", String(payload));
+        return;
+      }
+
+      const sections = [];
+
+      if (payload.activity_code) sections.push("Activity: " + payload.activity_code);
+      if (payload.question) sections.push("Question:\n" + payload.question);
+      if (payload.feedback) sections.push("Feedback:\n" + payload.feedback);
+      if (payload.pushback) sections.push("Improve this:\n" + payload.pushback);
+      if (payload.proposed_response) sections.push("Suggested Response:\n" + payload.proposed_response);
+
+      if (payload.score !== undefined) {
+        sections.push("Score: " + payload.score + " | Level: " + (payload.rubric_level || "-"));
+      }
+
+      if (payload.word_limit) sections.push("Word Limit: " + payload.word_limit);
+      if (payload.next_question) sections.push("Next:\n" + payload.next_question);
+
+      const finalText = sections.join("\n\n");
+      addMessage("bot", finalText || JSON.stringify(payload, null, 2));
+    }
+
+    async function sendMessage() {
+      const rawMessage = input.value.trim();
+      const userName = document.getElementById("userName").value.trim() || "Anonymous";
+      const userRole = document.getElementById("userRole").value.trim() || "Student";
+      const chatMode = document.getElementById("chatMode").value;
+      const activityCode = getCurrentActivityCode_();
+
+      if (!rawMessage) return;
+
+      input.value = "";
+      addMessage("user", rawMessage);
+      setLoading(true);
+
+      const fullMessage = buildInteractivePrefix() + "\n" + rawMessage;
+
+      try {
+        const res = await apiPost({
+          message: fullMessage,
+          sessionId: sessionId,
+          studentId: getStudentId_(),
+          userName: userName,
+          userEmail: getStudentEmail_(),
+          userRole: userRole || "Student",
+          chatMode: chatMode || "mentor",
+          activityCode: activityCode
+        });
+
+        setLoading(false);
+
+        if (!res || !res.ok) {
+          addMessage("error", res && res.error ? res.error : "Unknown server error.");
+          return;
+        }
+
+        sessionId = res.sessionId || sessionId;
+        localStorage.setItem("ai_drive_chatbot_session_id", sessionId);
+        updateSessionLabel();
+
+        renderMentorResponse(res);
+
+        if (isMobile()) collapseTopMenu();
+      } catch (err) {
+        setLoading(false);
+        addMessage("error", err && err.message ? err.message : String(err));
+      }
+    }
   </script>
 </body>
 </html>
+
 
 
