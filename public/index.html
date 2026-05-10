@@ -733,116 +733,98 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
       }
     }
 
-    async function signInStudent() {
-      const studentId = getStudentId_();
-      const name = document.getElementById("userName").value.trim();
-      const email = getStudentEmail_();
-      const level = document.getElementById("userRole").value.trim() || "Student";
+   async function signInStudent() {
+  const studentId = getStudentId_();
+  const name = document.getElementById("userName").value.trim();
+  const email = getStudentEmail_();
+  const level = document.getElementById("userRole").value.trim() || "Student";
 
-      if (!studentId || !name || !email) {
-        addMessage("error", "Please fill Student ID, Name, and Email.");
-        return;
-      }
+  if (!studentId || !name || !email) {
+    addMessage("error", "Please fill Student ID, Name, and Email.");
+    return;
+  }
 
-      setLoading(true);
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        action: "signInStudent",
+        studentId: studentId,
+        name: name,
+        email: email,
+        level: level
+      })
+    });
 
-      try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            action: "signInStudent",
-            studentId: studentId,
-            name: name,
-            email: email,
-            level: level
-          })
-        });
+    const res = await response.json();
 
-        const res = await response.json();
-        setLoading(false);
-
-        if (!res || !res.ok) {
-          addMessage("error", res && res.error ? res.error : "Sign in failed.");
-          return;
-        }
-
-        localStorage.setItem("mentor_studentId", res.studentId || studentId);
-        localStorage.setItem("mentor_userName", res.name || name);
-        localStorage.setItem("mentor_studentEmail", res.email || email);
-        localStorage.setItem("mentor_userRole", res.level || level);
-
-        addMessage("bot", (res.message || "Student signed in successfully.") + "\n\nStudent ID: " + (res.studentId || studentId));
-
-        if (isMobile()) {
-          collapseTopMenu();
-        }
-
-      } catch (err) {
-        setLoading(false);
-        addMessage("error", err && err.message ? err.message : String(err));
-      }
+    if (!res || !res.ok) {
+      addMessage("error", res && res.error ? res.error : "Sign in failed.");
+      return;
     }
 
-    async function sendMessage() {
-      const rawMessage = input.value.trim();
-      const userName = document.getElementById("userName").value.trim() || "Anonymous";
-      const userRole = document.getElementById("userRole").value.trim() || "Student";
-      const chatMode = document.getElementById("chatMode").value;
-      const activityCode = getCurrentActivityCode_();
+    localStorage.setItem("mentor_studentId", res.studentId);
+    localStorage.setItem("mentor_userName", res.name);
+    localStorage.setItem("mentor_studentEmail", res.email);
+    localStorage.setItem("mentor_userRole", res.level);
 
-      if (!rawMessage) {
-        return;
-      }
+    addMessage("bot", res.message + "\n\nStudent ID: " + res.studentId);
 
-      input.value = "";
-      addMessage("user", rawMessage);
-      setLoading(true);
+    if (isMobile()) collapseTopMenu();
 
-      const fullMessage = buildInteractivePrefix() + "\n" + rawMessage;
+  } catch (err) {
+    addMessage("error", err && err.message ? err.message : String(err));
+  }
+}
 
-      try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            message: fullMessage,
-            sessionId: sessionId,
-            studentId: getStudentId_(),
-            userName: userName,
-            userEmail: getStudentEmail_(),
-            userRole: userRole || "Student",
-            chatMode: chatMode || "mentor",
-            activityCode: activityCode
-          })
-        });
+async function signOutStudent() {
+  const studentId = getStudentId_();
 
-        const res = await response.json();
-        setLoading(false);
+  if (!studentId) {
+    addMessage("error", "Student ID is required to sign out.");
+    return;
+  }
 
-        if (!res || !res.ok) {
-          addMessage("error", res && res.error ? res.error : "Unknown server error.");
-          return;
-        }
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        action: "signOutStudent",
+        studentId: studentId
+      })
+    });
 
-        sessionId = res.sessionId || sessionId;
-        localStorage.setItem("ai_drive_chatbot_session_id", sessionId);
-        updateSessionLabel();
+    const res = await response.json();
 
-        renderMentorResponse(res);
+    if (!res || !res.ok) {
+      addMessage("error", res && res.error ? res.error : "Sign out failed.");
+      return;
+    }
 
-        if (isMobile()) {
-          collapseTopMenu();
-        }
+    document.getElementById("studentId").value = "";
+    document.getElementById("userName").value = "";
+    document.getElementById("studentEmail").value = "";
+    document.getElementById("userRole").value = "";
 
-      } catch (err) {
-        setLoading(false);
-        addMessage("error", err && err.message ? err.message : String(err));
-      }
+    localStorage.removeItem("mentor_studentId");
+    localStorage.removeItem("mentor_userName");
+    localStorage.removeItem("mentor_studentEmail");
+    localStorage.removeItem("mentor_userRole");
+
+    addMessage("bot", res.message + "\n\nLocal student data cleared.");
+
+    if (isMobile()) expandTopMenu();
+
+  } catch (err) {
+    addMessage("error", err && err.message ? err.message : String(err));
+  }
+}
 
 
 function renderMentorResponse(res) {
