@@ -108,15 +108,15 @@
       align-items: center;
     }
 
-    .controls {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      background: var(--panel);
-      display: grid;
-      grid-template-columns: 1fr 1fr auto;
-      gap: 8px;
-      align-items: center;
-    }
+.controls {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  display: grid;
+  grid-template-columns: 1fr 180px 160px 120px;
+  gap: 8px;
+  align-items: center;
+}
 
     .signin-card input,
     .controls input,
@@ -427,16 +427,16 @@
       </div>
 
       <div class="controls">
-        <input id="userRole" placeholder="Role or class, optional">
-        <select id="chatMode">
-          <option value="mentor" selected>Venture Mentor</option>
-          <option value="assessment">Assessment Coach</option>
-          <option value="faq">Knowledge FAQ</option>
-          <option value="general">General Assistant</option>
-        </select>
-        <input id="activityCode" type="text" placeholder="Activity, example: 1.1">
-        <button onclick="newSession()">New Session</button>
-      </div>
+  <input id="userRole" placeholder="Role or class, optional">
+  <select id="chatMode">
+    <option value="mentor" selected>Venture Mentor</option>
+    <option value="assessment">Assessment Coach</option>
+    <option value="faq">Knowledge FAQ</option>
+    <option value="general">General Assistant</option>
+  </select>
+  <input id="activityCode" type="text" placeholder="Activity, example: 1.1">
+  <button onclick="newSession()">New Session</button>
+</div>>
 
       <div class="quick-actions">
         <button onclick="quickAsk('Start by asking me the right diagnostic questions.')">Start diagnostic</button>
