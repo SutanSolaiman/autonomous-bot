@@ -103,7 +103,7 @@
       border-bottom: 1px solid var(--border);
       background: var(--panel);
       display: grid;
-      grid-template-columns: minmax(120px, 1fr) minmax(160px, 1fr) minmax(180px, 1fr) 110px;
+      grid-template-columns: 1fr 1fr 1fr auto;
       gap: 10px;
       align-items: center;
     }
@@ -113,9 +113,10 @@
       border-bottom: 1px solid var(--border);
       background: var(--panel);
       display: grid;
-      grid-template-columns: minmax(120px, 1fr) 180px 150px 120px;
+      grid-template-columns: minmax(140px, 1fr) 180px 140px 120px;
       gap: 8px;
       align-items: center;
+      width: 100%;
     }
 
     .signin-card input,
@@ -143,14 +144,6 @@
 
     .signin-toggle-btn.signed-in:hover {
       background: #7f1d1d;
-    }
-
-    .signin-toggle-btn.sign-on {
-      background: #047857;
-    }
-
-    .signin-toggle-btn.sign-on:hover {
-      background: #065f46;
     }
 
     .controls button {
@@ -467,12 +460,7 @@ Name: Andi
 Email: andi@email.com
 Activity: 1.1
 
-Button behavior:
-- Empty ID: Sign In
-- Existing ID: Sign In
-- New ID: Sign On
-- After signed in: Sign Out
-- After Sign Out: fields are cleared and button returns to Sign In
+After Sign In, the button becomes Sign Out. Sign Out clears local student data from this page.
       </div>
     </div>
 
@@ -490,8 +478,7 @@ Button behavior:
     let sessionId = localStorage.getItem("ai_drive_chatbot_session_id");
     let studentLookupTimer = null;
     let currentStudentExists = null;
-    let isSignedIn = localStorage.getItem("mentor_signedIn") === "true" &&
-      !!localStorage.getItem("mentor_studentId");
+    let isSignedIn = localStorage.getItem("mentor_signedIn") === "true";
 
     if (!sessionId) {
       sessionId = makeSessionId();
@@ -499,19 +486,9 @@ Button behavior:
     }
 
     restoreSavedFields();
-
-    if (!getStudentId_()) {
-      isSignedIn = false;
-      localStorage.setItem("mentor_signedIn", "false");
-    }
-
     updateSessionLabel();
     updateSignInButton();
-
-    if (!isSignedIn && getStudentId_()) {
-      scheduleStudentLookup();
-    }
-
+    if (!isSignedIn && getStudentId_()) { scheduleStudentLookup(); }
     setupMobileMenuDefault();
 
     const input = document.getElementById("messageInput");
@@ -530,9 +507,7 @@ Button behavior:
       el.addEventListener("input", function() {
         localStorage.setItem("mentor_" + id, el.value || "");
 
-        if (id === "studentId") {
-          isSignedIn = false;
-          localStorage.setItem("mentor_signedIn", "false");
+        if (id === "studentId" && !isSignedIn) {
           currentStudentExists = null;
           updateSignInButton();
           scheduleStudentLookup();
@@ -626,15 +601,9 @@ Button behavior:
     function setLoading(isLoading) {
       const sendBtn = document.getElementById("sendBtn");
       const signBtn = document.getElementById("signinToggleBtn");
-
-      if (sendBtn) {
-        sendBtn.disabled = isLoading;
-        sendBtn.textContent = isLoading ? "Sending..." : "Send";
-      }
-
-      if (signBtn) {
-        signBtn.disabled = isLoading;
-      }
+      sendBtn.disabled = isLoading;
+      sendBtn.textContent = isLoading ? "Sending..." : "Send";
+      signBtn.disabled = isLoading;
     }
 
     function getStudentId_() {
@@ -674,14 +643,7 @@ Button behavior:
       let modeInstruction = "";
 
       if (chatMode === "mentor") {
-        modeInstruction =
-  "Mode: Venture Mentor. " +
-  "CRITICAL LANGUAGE RULE: " +
-  "Reply ONLY in the exact dominant language used by the latest user message. " +
-  "Do NOT switch language automatically. " +
-  "Do NOT use Filipino, Tagalog, Malay, or another ASEAN language unless the student explicitly used that language. " +
-  "If the student writes in English, reply fully in English. " +
-  "If the student writes in Bahasa Indonesia, reply fully in Bahasa Indonesia. ";
+        modeInstruction = "Mode: Venture Mentor. Detect and reply in the same language used by the student. Evaluate the student's answer against the activity rubric. If weak, push back. If acceptable, propose a stronger response. Ask the student to type AGREE before recording.";
       } else if (chatMode === "assessment") {
         modeInstruction = "Mode: Assessment Coach. Detect and reply in the same language used by the student. Evaluate the response against the available rubric. Give strengths, gaps, and one improvement task.";
       } else if (chatMode === "faq") {
@@ -705,13 +667,6 @@ Button behavior:
 
     function scheduleStudentLookup() {
       clearTimeout(studentLookupTimer);
-
-      if (!getStudentId_()) {
-        currentStudentExists = null;
-        updateSignInButton();
-        return;
-      }
-
       studentLookupTimer = setTimeout(function() {
         lookupStudentById();
       }, 500);
@@ -727,7 +682,6 @@ Button behavior:
       });
 
       let res;
-
       try {
         res = await response.json();
       } catch (err) {
@@ -800,31 +754,24 @@ Button behavior:
 
       const studentId = getStudentId_();
 
-      btn.classList.remove("signed-in");
-      btn.classList.remove("sign-on");
-
-      if (isSignedIn && studentId) {
+      if (isSignedIn) {
         btn.textContent = "Sign Out";
         btn.classList.add("signed-in");
         return;
       }
+
+      btn.classList.remove("signed-in");
 
       if (!studentId) {
         btn.textContent = "Sign In";
         return;
       }
 
-      if (currentStudentExists === false) {
-        btn.textContent = "Sign On";
-        btn.classList.add("sign-on");
-        return;
-      }
-
-      btn.textContent = "Sign In";
+      btn.textContent = currentStudentExists === false ? "Sign On" : "Sign In";
     }
 
     function clearLocalStudentData() {
-      const ids = ["studentId", "userName", "studentEmail", "userRole", "activityCode"];
+      const ids = ["studentId", "userName", "studentEmail", "userRole"];
       ids.forEach(function(id) {
         const el = document.getElementById(id);
         if (el) el.value = "";
@@ -834,16 +781,14 @@ Button behavior:
       localStorage.removeItem("mentor_userName");
       localStorage.removeItem("mentor_studentEmail");
       localStorage.removeItem("mentor_userRole");
-      localStorage.removeItem("mentor_activityCode");
       localStorage.setItem("mentor_signedIn", "false");
-
       isSignedIn = false;
       currentStudentExists = null;
       updateSignInButton();
     }
 
     async function toggleSignInOut() {
-      if (isSignedIn && getStudentId_()) {
+      if (isSignedIn) {
         await signOutStudent();
       } else {
         await signInStudent();
@@ -891,10 +836,6 @@ Button behavior:
 
         addMessage("bot", (res.message || "Student signed in successfully.") + "\n\nStudent ID: " + (res.studentId || studentId));
 
-        if (res.latest) {
-          renderSavedProgress(res.latest);
-        }
-
         if (isMobile()) collapseTopMenu();
       } catch (err) {
         setLoading(false);
@@ -928,7 +869,7 @@ Button behavior:
         }
 
         clearLocalStudentData();
-        addMessage("bot", (res.message || "Student signed out.") + "\n\nStudent fields cleared. Button reset to Sign In.");
+        addMessage("bot", (res.message || "Student signed out.") + "\n\nLocal student data cleared.");
 
         if (isMobile()) expandTopMenu();
       } catch (err) {
@@ -937,87 +878,69 @@ Button behavior:
       }
     }
 
-    function renderSavedProgress(latest) {
-      if (!latest) return;
-
-      const activityEl = document.getElementById("activityCode");
-
-      if (activityEl && latest.activityCode) {
-        activityEl.value = latest.activityCode;
-        localStorage.setItem("mentor_activityCode", latest.activityCode);
-      }
-
-      addMessage("bot", [
-        "Previous progress found.",
-        "",
-        "Last Activity: " + (latest.activityCode || "-"),
-        "Status: " + (latest.status || "-"),
-        "Score: " + (latest.score || "-"),
-        "",
-        "Saved Response:",
-        latest.response || "-",
-        "",
-        "Feedback:",
-        latest.feedback || "-"
-      ].join("\n"));
-    }
-
     function renderMentorResponse(res) {
       if (!res) {
         addMessage("error", "Empty response.");
         return;
       }
 
-      let payload = res.answer || res.response || res.data || res;
+      let text = res.answer || res.response || res.data || "";
 
-      if (typeof payload === "string") {
-        const cleaned = payload
-          .replace(/^```json\s*/i, "")
-          .replace(/^```\s*/i, "")
-          .replace(/```$/i, "")
-          .trim();
-
-        try {
-          payload = JSON.parse(cleaned);
-        } catch (err) {
-          const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-
-          if (jsonMatch) {
-            try {
-              payload = JSON.parse(jsonMatch[0]);
-            } catch (err2) {
-              addMessage("bot", cleaned);
-              return;
-            }
-          } else {
-            addMessage("bot", cleaned);
-            return;
-          }
-        }
-      }
-
-      if (typeof payload !== "object") {
-        addMessage("bot", String(payload));
+      if (typeof text !== "string") {
+        addMessage("bot", JSON.stringify(text, null, 2));
         return;
       }
 
-      const sections = [];
+      const cleaned = text
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/```$/i, "")
+        .trim();
 
-      if (payload.activity_code) sections.push("Activity: " + payload.activity_code);
-      if (payload.question) sections.push("Question:\n" + payload.question);
-      if (payload.feedback) sections.push("Feedback:\n" + payload.feedback);
-      if (payload.pushback) sections.push("Improve this:\n" + payload.pushback);
-      if (payload.proposed_response) sections.push("Suggested Response:\n" + payload.proposed_response);
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
 
-      if (payload.score !== undefined) {
-        sections.push("Score: " + payload.score + " | Level: " + (payload.rubric_level || "-"));
+      if (jsonMatch) {
+        try {
+          const payload = JSON.parse(jsonMatch[0]);
+          const lines = [];
+
+          if (payload.activity_code) {
+            lines.push("Activity: " + payload.activity_code);
+          }
+
+          if (payload.question) {
+            lines.push("Question:\n" + payload.question);
+          }
+
+          if (payload.feedback) {
+            lines.push("Feedback:\n" + payload.feedback);
+          }
+
+          if (payload.pushback) {
+            lines.push("Improve this:\n" + payload.pushback);
+          }
+
+          if (payload.proposed_response) {
+            lines.push("Suggested Response:\n" + payload.proposed_response);
+          }
+
+          if (payload.score !== undefined) {
+            lines.push("Score: " + payload.score + " | Level: " + (payload.rubric_level || "-"));
+          }
+
+          if (payload.next_question) {
+            lines.push("Next:\n" + payload.next_question);
+          }
+
+          addMessage("bot", lines.join("\n\n") || cleaned);
+          return;
+        } catch (err) {
+          addMessage("bot", cleaned);
+          return;
+        }
       }
 
-      if (payload.word_limit) sections.push("Word Limit: " + payload.word_limit);
-      if (payload.next_question) sections.push("Next:\n" + payload.next_question);
-
-      const finalText = sections.join("\n\n");
-      addMessage("bot", finalText || JSON.stringify(payload, null, 2));
+      addMessage("bot", cleaned);
     }
 
     async function sendMessage() {
