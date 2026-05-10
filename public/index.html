@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Autonomous Mentor Chat</title>
@@ -690,44 +689,51 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
       }, 500);
     }
 
-    function lookupStudentById() {
+    async function lookupStudentById() {
       const studentId = getStudentId_();
       if (!studentId) return;
 
-      if (typeof google === "undefined" || !google.script || !google.script.run) {
-        return;
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            action: "getStudentProfile",
+            studentId: studentId
+          })
+        });
+
+        const res = await response.json();
+
+        if (!res || !res.ok || !res.found) return;
+
+        const nameEl = document.getElementById("userName");
+        const emailEl = document.getElementById("studentEmail");
+        const roleEl = document.getElementById("userRole");
+
+        if (nameEl && res.name) {
+          nameEl.value = res.name;
+          localStorage.setItem("mentor_userName", res.name);
+        }
+
+        if (emailEl && res.email) {
+          emailEl.value = res.email;
+          localStorage.setItem("mentor_studentEmail", res.email);
+        }
+
+        if (roleEl && res.level) {
+          roleEl.value = res.level;
+          localStorage.setItem("mentor_userRole", res.level);
+        }
+
+      } catch (err) {
+        console.log("Student lookup failed:", err);
       }
-
-      google.script.run
-        .withSuccessHandler(function(res) {
-          if (!res || !res.ok || !res.found) return;
-
-          const nameEl = document.getElementById("userName");
-          const emailEl = document.getElementById("studentEmail");
-          const roleEl = document.getElementById("userRole");
-
-          if (nameEl && res.name) {
-            nameEl.value = res.name;
-            localStorage.setItem("mentor_userName", res.name);
-          }
-
-          if (emailEl && res.email) {
-            emailEl.value = res.email;
-            localStorage.setItem("mentor_studentEmail", res.email);
-          }
-
-          if (roleEl && res.level) {
-            roleEl.value = res.level;
-            localStorage.setItem("mentor_userRole", res.level);
-          }
-        })
-        .withFailureHandler(function(err) {
-          console.log("Student lookup failed:", err);
-        })
-        .getStudentProfileById_(studentId);
     }
 
-    function signInStudent() {
+    async function signInStudent() {
       const studentId = getStudentId_();
       const name = document.getElementById("userName").value.trim();
       const email = getStudentEmail_();
@@ -738,46 +744,49 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
         return;
       }
 
-      if (typeof google === "undefined" || !google.script || !google.script.run) {
-        addMessage("error", "Google Apps Script client is not available. Open this page from the Apps Script Web App, or use the Vercel fetch version.");
-        return;
-      }
-
       setLoading(true);
 
-      google.script.run
-        .withSuccessHandler(function(res) {
-          setLoading(false);
-
-          if (!res || !res.ok) {
-            addMessage("error", res && res.error ? res.error : "Sign in failed.");
-            return;
-          }
-
-          localStorage.setItem("mentor_studentId", res.studentId || studentId);
-          localStorage.setItem("mentor_userName", res.name || name);
-          localStorage.setItem("mentor_studentEmail", res.email || email);
-          localStorage.setItem("mentor_userRole", res.level || level);
-
-          addMessage("bot", (res.message || "Student signed in successfully.") + "\n\nStudent ID: " + (res.studentId || studentId));
-
-          if (isMobile()) {
-            collapseTopMenu();
-          }
-        })
-        .withFailureHandler(function(err) {
-          setLoading(false);
-          addMessage("error", err && err.message ? err.message : String(err));
-        })
-        .signInStudent({
-          studentId: studentId,
-          name: name,
-          email: email,
-          level: level
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            action: "signInStudent",
+            studentId: studentId,
+            name: name,
+            email: email,
+            level: level
+          })
         });
+
+        const res = await response.json();
+        setLoading(false);
+
+        if (!res || !res.ok) {
+          addMessage("error", res && res.error ? res.error : "Sign in failed.");
+          return;
+        }
+
+        localStorage.setItem("mentor_studentId", res.studentId || studentId);
+        localStorage.setItem("mentor_userName", res.name || name);
+        localStorage.setItem("mentor_studentEmail", res.email || email);
+        localStorage.setItem("mentor_userRole", res.level || level);
+
+        addMessage("bot", (res.message || "Student signed in successfully.") + "\n\nStudent ID: " + (res.studentId || studentId));
+
+        if (isMobile()) {
+          collapseTopMenu();
+        }
+
+      } catch (err) {
+        setLoading(false);
+        addMessage("error", err && err.message ? err.message : String(err));
+      }
     }
 
-    function sendMessage() {
+    async function sendMessage() {
       const rawMessage = input.value.trim();
       const userName = document.getElementById("userName").value.trim() || "Anonymous";
       const userRole = document.getElementById("userRole").value.trim() || "Student";
@@ -794,40 +803,48 @@ Then type the student's answer. Type AGREE only after the mentor proposes a fina
 
       const fullMessage = buildInteractivePrefix() + "\n" + rawMessage;
 
-      google.script.run
-        .withSuccessHandler(function(res) {
-          setLoading(false);
-
-          if (!res || !res.ok) {
-            addMessage("error", res && res.error ? res.error : "Unknown server error.");
-            return;
-          }
-
-          sessionId = res.sessionId || sessionId;
-          localStorage.setItem("ai_drive_chatbot_session_id", sessionId);
-          updateSessionLabel();
-
-          addMessage("bot", res.answer || "No answer returned.");
-
-          if (isMobile()) {
-            collapseTopMenu();
-          }
-        })
-        .withFailureHandler(function(err) {
-          setLoading(false);
-          addMessage("error", err && err.message ? err.message : String(err));
-        })
-        .chatbotApi({
-          message: fullMessage,
-          sessionId: sessionId,
-          studentId: getStudentId_(),
-          userName: userName,
-          userEmail: getStudentEmail_(),
-          userRole: userRole || "Student",
-          chatMode: chatMode || "mentor",
-          activityCode: activityCode
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: fullMessage,
+            sessionId: sessionId,
+            studentId: getStudentId_(),
+            userName: userName,
+            userEmail: getStudentEmail_(),
+            userRole: userRole || "Student",
+            chatMode: chatMode || "mentor",
+            activityCode: activityCode
+          })
         });
+
+        const res = await response.json();
+        setLoading(false);
+
+        if (!res || !res.ok) {
+          addMessage("error", res && res.error ? res.error : "Unknown server error.");
+          return;
+        }
+
+        sessionId = res.sessionId || sessionId;
+        localStorage.setItem("ai_drive_chatbot_session_id", sessionId);
+        updateSessionLabel();
+
+        addMessage("bot", res.answer || "No answer returned.");
+
+        if (isMobile()) {
+          collapseTopMenu();
+        }
+
+      } catch (err) {
+        setLoading(false);
+        addMessage("error", err && err.message ? err.message : String(err));
+      }
     }
+
   </script>
 </body>
 </html>
