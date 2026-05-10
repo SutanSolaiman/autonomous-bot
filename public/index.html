@@ -103,21 +103,27 @@
       border-bottom: 1px solid var(--border);
       background: var(--panel);
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr auto;
+     grid-template-columns: 1fr 1fr 1fr auto auto;
       gap: 8px;
       align-items: center;
     }
 
-    .signin-card {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      background: var(--panel);
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr auto;
-      gap: 10px;
-      align-items: center;
-    }
+.signin-card {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+.signout-btn {
+  background: #991b1b;
+}
 
+.signout-btn:hover {
+  background: #7f1d1d;
+}
     .student-meta {
       padding: 12px 14px;
       border-bottom: 1px solid var(--border);
@@ -425,11 +431,12 @@
 
     <div class="top-panel" id="topPanel">
       <div class="signin-card">
-        <input id="studentId" type="text" placeholder="Student ID, example: 001">
-        <input id="userName" type="text" placeholder="Name">
-        <input id="studentEmail" type="email" placeholder="Email">
-        <button onclick="signInStudent()">Sign In</button>
-      </div>
+  <input id="studentId" type="text" placeholder="Student ID, example: 001">
+  <input id="userName" type="text" placeholder="Name">
+  <input id="studentEmail" type="email" placeholder="Email">
+  <button onclick="signInStudent()">Sign In</button>
+  <button onclick="signOutStudent()" class="signout-btn">Sign Out</button>
+</div>
 
       <div class="controls">
         <input id="userRole" placeholder="Role or class, optional">
