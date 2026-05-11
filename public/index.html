@@ -879,116 +879,56 @@ After Sign In, the button becomes Sign Out. Sign Out clears local student data f
     }
 
     function renderMentorResponse(res) {
-      if (!res) {
-        addMessage("error", "Empty response.");
-        return;
-      }
+  if (!res) {
+    addMessage("error", "Empty response.");
+    return;
+  }
 
-      let text = res.answer || res.response || res.data || "";
+  let text = res.answer || res.response || res.data || "";
 
-      if (typeof text !== "string") {
-        addMessage("bot", JSON.stringify(text, null, 2));
-        return;
-      }
+  if (typeof text !== "string") {
+    text = JSON.stringify(text, null, 2);
+  }
 
-      const cleaned = text
-        .replace(/^```json\s*/i, "")
-        .replace(/^```\s*/i, "")
-        .replace(/```$/i, "")
-        .trim();
+  const cleaned = text
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```$/i, "")
+    .trim();
 
-      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
 
-      if (jsonMatch) {
-        try {
-          const payload = JSON.parse(jsonMatch[0]);
-          const lines = [];
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    addMessage("bot", cleaned);
+    return;
+  }
 
-          if (payload.activity_code) {
-            lines.push("Activity: " + payload.activity_code);
-          }
+  const prefix = cleaned.substring(0, firstBrace).trim();
+  const jsonText = cleaned.substring(firstBrace, lastBrace + 1);
 
-          if (payload.question) {
-            lines.push("Question:\n" + payload.question);
-          }
+  try {
+    const payload = JSON.parse(jsonText);
+    const lines = [];
 
-          if (payload.feedback) {
-            lines.push("Feedback:\n" + payload.feedback);
-          }
+    if (prefix) lines.push(prefix);
+    if (payload.activity_code) lines.push("Activity: " + payload.activity_code);
+    if (payload.question) lines.push("Question:\n" + payload.question);
+    if (payload.feedback) lines.push("Feedback:\n" + payload.feedback);
+    if (payload.pushback) lines.push("Improve this:\n" + payload.pushback);
+    if (payload.proposed_response) lines.push("Suggested Response:\n" + payload.proposed_response);
 
-          if (payload.pushback) {
-            lines.push("Improve this:\n" + payload.pushback);
-          }
-
-          if (payload.proposed_response) {
-            lines.push("Suggested Response:\n" + payload.proposed_response);
-          }
-
-          if (payload.score !== undefined) {
-            lines.push("Score: " + payload.score + " | Level: " + (payload.rubric_level || "-"));
-          }
-
-          if (payload.next_question) {
-            lines.push("Next:\n" + payload.next_question);
-          }
-
-          addMessage("bot", lines.join("\n\n") || cleaned);
-          return;
-        } catch (err) {
-          addMessage("bot", cleaned);
-          return;
-        }
-      }
-
-      addMessage("bot", cleaned);
+    if (payload.score !== undefined) {
+      lines.push("Score: " + payload.score + " | Level: " + (payload.rubric_level || "-"));
     }
 
-    async function sendMessage() {
-      const rawMessage = input.value.trim();
-      const userName = document.getElementById("userName").value.trim() || "Anonymous";
-      const userRole = document.getElementById("userRole").value.trim() || "Student";
-      const chatMode = document.getElementById("chatMode").value;
-      const activityCode = getCurrentActivityCode_();
+    if (payload.next_question) lines.push("Next:\n" + payload.next_question);
 
-      if (!rawMessage) return;
-
-      input.value = "";
-      addMessage("user", rawMessage);
-      setLoading(true);
-
-      const fullMessage = buildInteractivePrefix() + "\n" + rawMessage;
-
-      try {
-        const res = await apiPost({
-          message: fullMessage,
-          sessionId: sessionId,
-          studentId: getStudentId_(),
-          userName: userName,
-          userEmail: getStudentEmail_(),
-          userRole: userRole || "Student",
-          chatMode: chatMode || "mentor",
-          activityCode: activityCode
-        });
-
-        setLoading(false);
-
-        if (!res || !res.ok) {
-          addMessage("error", res && res.error ? res.error : "Unknown server error.");
-          return;
-        }
-
-        sessionId = res.sessionId || sessionId;
-        localStorage.setItem("ai_drive_chatbot_session_id", sessionId);
-        updateSessionLabel();
-
-        renderMentorResponse(res);
-
-        if (isMobile()) collapseTopMenu();
-      } catch (err) {
-        setLoading(false);
-        addMessage("error", err && err.message ? err.message : String(err));
-      }
-    }
+    addMessage("bot", lines.join("\n\n") || cleaned);
+  } catch (err) {
+    addMessage("bot", cleaned);
+  }
+}
   </script>
 </body>
 </html>
