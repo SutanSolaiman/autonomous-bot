@@ -395,7 +395,26 @@
   </div>
 
   <script>
-    const BACKEND_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+   async function callBackend(payload) {
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload || {})
+  });
+
+  const text = await res.text();
+
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    return {
+      ok: false,
+      error: text || String(err)
+    };
+  }
+}
 
     let signedInStudent = null;
     let sessionId = getOrCreateSessionId();
