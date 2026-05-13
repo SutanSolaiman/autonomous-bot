@@ -395,26 +395,26 @@
   </div>
 
   <script>
-  async function callBackend(payload) {
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload || {})
-  });
+    async function callBackend(payload) {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload || {})
+      });
 
-  const text = await res.text();
+      const text = await res.text();
 
-  try {
-    return JSON.parse(text);
-  } catch (err) {
-    return {
-      ok: false,
-      error: text || String(err)
-    };
-  }
-}
+      try {
+        return JSON.parse(text);
+      } catch (err) {
+        return {
+          ok: false,
+          error: text || String(err)
+        };
+      }
+    }
 
     let signedInStudent = null;
     let sessionId = getOrCreateSessionId();
@@ -442,6 +442,7 @@
 
     function setChatStatus(text) {
       const el = getEl("chatStatus");
+
       if (el) {
         el.value = text || "";
       }
@@ -449,6 +450,7 @@
 
     function addMessage(type, text) {
       const box = getEl("messages");
+
       if (!box) return;
 
       const div = document.createElement("div");
@@ -464,39 +466,6 @@
       if (typeof err === "string") return err;
       if (err.message) return err.message;
       return JSON.stringify(err);
-    }
-
-    async function callBackend(payload) {
-      if (
-        !BACKEND_URL ||
-        BACKEND_URL === "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE" ||
-        BACKEND_URL.indexOf("script.google.com/macros/s/") === -1 ||
-        BACKEND_URL.indexOf("/exec") === -1
-      ) {
-        return {
-          ok: false,
-          error: "BACKEND_URL is not configured. Paste the Google Apps Script Web App URL ending in /exec."
-        };
-      }
-
-      const res = await fetch(BACKEND_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain;charset=utf-8"
-        },
-        body: JSON.stringify(payload || {})
-      });
-
-      const text = await res.text();
-
-      try {
-        return JSON.parse(text);
-      } catch (err) {
-        return {
-          ok: false,
-          error: text || String(err)
-        };
-      }
     }
 
     function getStudentFormValues() {
@@ -542,6 +511,7 @@
 
     function setStudentAuthStatus(message, type) {
       const el = getEl("studentAuthStatus");
+
       if (!el) return;
 
       el.textContent = message || "";
@@ -623,6 +593,7 @@
       }
 
       const btn = getEl("studentAuthBtn");
+
       if (btn) {
         btn.disabled = true;
       }
@@ -689,6 +660,7 @@
           : getStudentFormValues().studentId;
 
       const btn = getEl("studentAuthBtn");
+
       if (btn) {
         btn.disabled = true;
       }
