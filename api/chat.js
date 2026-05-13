@@ -6,12 +6,12 @@ export default async function handler(req, res) {
     });
   }
 
-  const backendUrl = process.env.APPS_SCRIPT_WEB_APP_URL;
+  const backendUrl = process.env.APPS_SCRIPT_BACKEND_URL;
 
   if (!backendUrl) {
     return res.status(500).json({
       ok: false,
-      error: "Missing Vercel environment variable: APPS_SCRIPT_WEB_APP_URL"
+      error: "Missing Vercel environment variable: APPS_SCRIPT_BACKEND_URL"
     });
   }
 
@@ -21,7 +21,7 @@ export default async function handler(req, res) {
   ) {
     return res.status(500).json({
       ok: false,
-      error: "APPS_SCRIPT_WEB_APP_URL must be a Google Apps Script Web App URL ending in /exec."
+      error: "APPS_SCRIPT_BACKEND_URL must be a Google Apps Script Web App URL ending in /exec."
     });
   }
 
